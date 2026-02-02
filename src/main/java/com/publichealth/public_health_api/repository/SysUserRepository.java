@@ -1,6 +1,8 @@
 package com.publichealth.public_health_api.repository;
 
 import com.publichealth.public_health_api.entity.SysUser;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -62,6 +64,11 @@ public interface SysUserRepository extends JpaRepository<SysUser, String> {
     List<SysUser> findByRoleAndDeletedFalse(SysUser.UserRole role);
 
     /**
+     * 根据角色查询未删除的用户列表 (分页)
+     */
+    Page<SysUser> findByRoleAndDeletedFalse(SysUser.UserRole role, Pageable pageable);
+
+    /**
      * 根据角色列表查询用户
      */
     List<SysUser> findByRoleIn(List<SysUser.UserRole> roles);
@@ -79,6 +86,11 @@ public interface SysUserRepository extends JpaRepository<SysUser, String> {
      * 查询所有激活且未删除的用户
      */
     List<SysUser> findByStatusAndDeletedFalse(SysUser.UserStatus status);
+
+    /**
+     * 查询所有激活且未删除的用户 (分页)
+     */
+    Page<SysUser> findByStatusAndDeletedFalse(SysUser.UserStatus status, Pageable pageable);
 
     // ============================================
     // 删除标记相关查询

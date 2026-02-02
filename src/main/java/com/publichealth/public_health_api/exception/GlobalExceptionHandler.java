@@ -45,7 +45,7 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
 
-        return ApiResponse.badRequest("参数校验失败").setData(errors);
+        return ApiResponse.badRequest("参数校验失败", errors);
     }
 
     /**

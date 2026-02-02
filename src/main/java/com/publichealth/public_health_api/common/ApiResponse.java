@@ -46,6 +46,13 @@ public class ApiResponse<T> {
     }
 
     /**
+     * 成功响应 (仅消息，无数据)
+     */
+    public static ApiResponse<Void> success(String message) {
+        return new ApiResponse<>(200, message, null, System.currentTimeMillis());
+    }
+
+    /**
      * 成功响应 (带数据)
      */
     public static <T> ApiResponse<T> success(T data) {
@@ -82,6 +89,13 @@ public class ApiResponse<T> {
      */
     public static <T> ApiResponse<T> badRequest(String message) {
         return new ApiResponse<>(400, message, null, System.currentTimeMillis());
+    }
+
+    /**
+     * 客户端错误 (400) 带数据
+     */
+    public static <T> ApiResponse<T> badRequest(String message, T data) {
+        return new ApiResponse<>(400, message, data, System.currentTimeMillis());
     }
 
     /**
