@@ -1,10 +1,10 @@
-package com.publichealth.public_health_api.controller;
+package com.publichealth.public_health_api.module.sysuser.controller;
 
 import com.publichealth.public_health_api.common.ApiResponse;
 import com.publichealth.public_health_api.common.PageResult;
-import com.publichealth.public_health_api.dto.*;
-import com.publichealth.public_health_api.entity.SysUser;
-import com.publichealth.public_health_api.service.SysUserService;
+import com.publichealth.public_health_api.module.sysuser.dto.*;
+import com.publichealth.public_health_api.module.sysuser.entity.SysUser;
+import com.publichealth.public_health_api.module.sysuser.service.SysUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

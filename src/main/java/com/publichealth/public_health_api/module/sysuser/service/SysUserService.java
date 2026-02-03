@@ -1,8 +1,8 @@
-package com.publichealth.public_health_api.service;
+package com.publichealth.public_health_api.module.sysuser.service;
 
 import com.publichealth.public_health_api.common.PageResult;
-import com.publichealth.public_health_api.dto.*;
-import com.publichealth.public_health_api.entity.SysUser;
+import com.publichealth.public_health_api.module.sysuser.dto.*;
+import com.publichealth.public_health_api.module.sysuser.entity.SysUser;
 
 import java.util.List;
 

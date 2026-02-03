@@ -1,6 +1,6 @@
-package com.publichealth.public_health_api.dto;
+package com.publichealth.public_health_api.module.sysuser.dto;
 
-import com.publichealth.public_health_api.entity.SysUser;
+import com.publichealth.public_health_api.module.sysuser.entity.SysUser;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

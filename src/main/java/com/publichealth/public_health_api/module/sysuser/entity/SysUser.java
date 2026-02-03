@@ -1,4 +1,4 @@
-package com.publichealth.public_health_api.entity;
+package com.publichealth.public_health_api.module.sysuser.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

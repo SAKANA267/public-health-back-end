@@ -1,4 +1,4 @@
-package com.publichealth.public_health_api.dto;
+package com.publichealth.public_health_api.module.sysuser.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

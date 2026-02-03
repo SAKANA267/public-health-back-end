@@ -1,6 +1,6 @@
-package com.publichealth.public_health_api.repository;
+package com.publichealth.public_health_api.module.sysuser.repository;
 
-import com.publichealth.public_health_api.entity.SysUser;
+import com.publichealth.public_health_api.module.sysuser.entity.SysUser;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
