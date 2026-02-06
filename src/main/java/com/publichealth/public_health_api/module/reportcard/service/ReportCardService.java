@@ -119,6 +119,13 @@ public interface ReportCardService {
     void rejectReportCard(String id, String auditorId, String remark);
 
     /**
+     * 撤回审核
+     * 将审核通过或不通过状态改回待审核状态
+     * @param id 报告卡ID
+     */
+    void withdrawAudit(String id);
+
+    /**
      * 分页查询待审核报告卡列表
      * @param request 查询请求
      * @return 分页结果

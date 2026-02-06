@@ -1,7 +1,9 @@
 package com.publichealth.public_health_api.module.sysuser.controller;
 
+import com.publichealth.public_health_api.annotation.OperationLog;
 import com.publichealth.public_health_api.common.ApiResponse;
 import com.publichealth.public_health_api.common.PageResult;
+import com.publichealth.public_health_api.module.operationlog.enums.OperationType;
 import com.publichealth.public_health_api.module.sysuser.dto.*;
 import com.publichealth.public_health_api.module.sysuser.entity.SysUser;
 import com.publichealth.public_health_api.module.sysuser.service.SysUserService;
@@ -34,6 +36,7 @@ public class SysUserController {
      * POST /api/users
      */
     @PostMapping
+    @OperationLog(module = "用户管理", operationType = OperationType.CREATE, description = "创建用户")
     public ApiResponse<SysUserDTO> createUser(@Valid @RequestBody CreateUserRequest request) {
         log.info("收到创建用户请求: username={}", request.getUsername());
         SysUserDTO user = userService.createUser(request);
@@ -67,6 +70,7 @@ public class SysUserController {
      * PUT /api/users/{id}
      */
     @PutMapping("/{id}")
+    @OperationLog(module = "用户管理", operationType = OperationType.UPDATE, description = "更新用户信息")
     public ApiResponse<SysUserDTO> updateUser(
             @PathVariable String id,
             @Valid @RequestBody UpdateUserRequest request) {
@@ -80,6 +84,7 @@ public class SysUserController {
      * DELETE /api/users/{id}
      */
     @DeleteMapping("/{id}")
+    @OperationLog(module = "用户管理", operationType = OperationType.DELETE, description = "删除用户")
     public ApiResponse<Void> deleteUser(@PathVariable String id) {
         log.info("删除用户: id={}", id);
         userService.deleteUser(id);
@@ -91,6 +96,7 @@ public class SysUserController {
      * DELETE /api/users/batch
      */
     @DeleteMapping("/batch")
+    @OperationLog(module = "用户管理", operationType = OperationType.DELETE, description = "批量删除用户")
     public ApiResponse<Void> batchDeleteUsers(@RequestBody List<String> ids) {
         log.info("批量删除用户: count={}", ids.size());
         userService.batchDeleteUsers(ids);
@@ -182,6 +188,7 @@ public class SysUserController {
      * PUT /api/users/{id}/password
      */
     @PutMapping("/{id}/password")
+    @OperationLog(module = "用户管理", operationType = OperationType.UPDATE, description = "修改密码", logParams = false)
     public ApiResponse<Void> changePassword(
             @PathVariable String id,
             @Valid @RequestBody ChangePasswordRequest request) {

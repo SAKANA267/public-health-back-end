@@ -312,6 +312,30 @@ public class ReportCardServiceImpl implements ReportCardService {
     }
 
     @Override
+    @Transactional
+    public void withdrawAudit(String id) {
+        log.info("撤回审核: id={}", id);
+
+        ReportCard entity = repository.findById(id)
+                .orElseThrow(() -> new BusinessException("报告卡不存在"));
+
+        // 业务校验: 仅允许撤回已审核或审核不通过状态的报告卡
+        if (entity.getStatus() == ReportCard.ReportStatus.PENDING) {
+            throw new BusinessException("该报告卡为待审核状态，无需撤回");
+        }
+
+        // 重置为待审核状态
+        entity.setStatus(ReportCard.ReportStatus.PENDING);
+        entity.setAuditDate(null);
+        entity.setAuditor(null);
+        entity.setAuditorId(null);
+        entity.setRemark(null);
+
+        repository.save(entity);
+        log.info("报告卡审核已撤回: id={}", id);
+    }
+
+    @Override
     public PageResult<ReportCardDTO> getPendingCards(ReportCardQueryRequest request) {
         log.info("查询待审核报告卡列表: page={}, size={}", request.getPage(), request.getSize());
 

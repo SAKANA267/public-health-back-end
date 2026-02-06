@@ -1,7 +1,9 @@
 package com.publichealth.public_health_api.module.reportcard.controller;
 
+import com.publichealth.public_health_api.annotation.OperationLog;
 import com.publichealth.public_health_api.common.ApiResponse;
 import com.publichealth.public_health_api.common.PageResult;
+import com.publichealth.public_health_api.module.operationlog.enums.OperationType;
 import com.publichealth.public_health_api.module.reportcard.dto.*;
 import com.publichealth.public_health_api.module.reportcard.entity.ReportCard;
 import com.publichealth.public_health_api.module.reportcard.service.ReportCardService;
@@ -34,6 +36,7 @@ public class ReportCardController {
      * POST /api/report-cards
      */
     @PostMapping
+    @OperationLog(module = "报告卡管理", operationType = OperationType.CREATE, description = "创建报告卡")
     public ApiResponse<ReportCardDTO> createReportCard(@Valid @RequestBody CreateReportCardRequest request) {
         log.info("收到创建报告卡请求: inpatientNo={}, name={}", request.getInpatientNo(), request.getName());
         ReportCardDTO dto = reportCardService.createReportCard(request);
@@ -68,6 +71,7 @@ public class ReportCardController {
      * PUT /api/report-cards/{id}
      */
     @PutMapping("/{id}")
+    @OperationLog(module = "报告卡管理", operationType = OperationType.UPDATE, description = "更新报告卡")
     public ApiResponse<ReportCardDTO> updateReportCard(
             @PathVariable String id,
             @Valid @RequestBody UpdateReportCardRequest request) {
@@ -81,6 +85,7 @@ public class ReportCardController {
      * DELETE /api/report-cards/{id}
      */
     @DeleteMapping("/{id}")
+    @OperationLog(module = "报告卡管理", operationType = OperationType.DELETE, description = "删除报告卡")
     public ApiResponse<Void> deleteReportCard(@PathVariable String id) {
         log.info("删除报告卡: id={}", id);
         reportCardService.deleteReportCard(id);
@@ -92,6 +97,7 @@ public class ReportCardController {
      * DELETE /api/report-cards/batch
      */
     @DeleteMapping("/batch")
+    @OperationLog(module = "报告卡管理", operationType = OperationType.DELETE, description = "批量删除报告卡")
     public ApiResponse<Void> batchDeleteReportCards(@RequestBody List<String> ids) {
         log.info("批量删除报告卡: count={}", ids.size());
         reportCardService.batchDeleteReportCards(ids);
@@ -166,6 +172,7 @@ public class ReportCardController {
      * PUT /api/report-cards/{id}/approve
      */
     @PutMapping("/{id}/approve")
+    @OperationLog(module = "报告卡管理", operationType = OperationType.AUDIT, description = "审核通过")
     public ApiResponse<Void> approveReportCard(
             @PathVariable String id,
             @Valid @RequestBody AuditRequest request) {
@@ -179,12 +186,24 @@ public class ReportCardController {
      * PUT /api/report-cards/{id}/reject
      */
     @PutMapping("/{id}/reject")
+    @OperationLog(module = "报告卡管理", operationType = OperationType.AUDIT, description = "审核拒绝")
     public ApiResponse<Void> rejectReportCard(
             @PathVariable String id,
             @Valid @RequestBody AuditRequest request) {
         log.info("审核拒绝报告卡: id={}, auditorId={}", id, request.getAuditorId());
         reportCardService.rejectReportCard(id, request.getAuditorId(), request.getRemark());
         return ApiResponse.success("审核拒绝");
+    }
+
+    /**
+     * 撤回审核
+     * PUT /api/report-cards/{id}/withdraw
+     */
+    @PutMapping("/{id}/withdraw")
+    public ApiResponse<Void> withdrawAudit(@PathVariable String id) {
+        log.info("撤回审核: id={}", id);
+        reportCardService.withdrawAudit(id);
+        return ApiResponse.success("审核已撤回");
     }
 
     /**
