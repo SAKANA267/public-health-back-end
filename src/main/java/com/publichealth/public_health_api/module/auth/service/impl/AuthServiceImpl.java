@@ -41,13 +41,8 @@ public class AuthServiceImpl implements AuthService {
     public TokenResponse login(LoginRequest request) {
         log.info("用户登录: username={}", request.getUsername());
 
-        // 1. 验证用户
+        // 1. 验证用户（包括用户名、密码、状态检查）
         SysUser user = sysUserService.validateUser(request.getUsername(), request.getPassword());
-
-        // 2. 检查用户状态
-        if (user.getStatus() == SysUser.UserStatus.INACTIVE) {
-            throw new BusinessException("用户已被禁用");
-        }
 
         // 3. 生成令牌
         String accessToken = jwtTokenProvider.generateAccessToken(

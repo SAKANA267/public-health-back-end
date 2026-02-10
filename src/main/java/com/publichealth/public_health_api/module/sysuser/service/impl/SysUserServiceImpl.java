@@ -303,9 +303,19 @@ public class SysUserServiceImpl implements SysUserService {
         log.info("验证用户: username={}", username);
 
         return userRepository.findByUsernameAndDeletedFalse(username)
-                .filter(user -> passwordEncoder.matches(password, user.getPassword()))
-                .filter(user -> user.getStatus() == SysUser.UserStatus.ACTIVE)
-                .orElse(null);
+                .filter(user -> {
+                    if (!passwordEncoder.matches(password, user.getPassword())) {
+                        throw new BusinessException("用户名或密码错误");
+                    }
+                    return true;
+                })
+                .filter(user -> {
+                    if (user.getStatus() != SysUser.UserStatus.ACTIVE) {
+                        throw new BusinessException("用户已被禁用");
+                    }
+                    return true;
+                })
+                .orElseThrow(() -> new BusinessException("用户名或密码错误"));
     }
 
     @Override
