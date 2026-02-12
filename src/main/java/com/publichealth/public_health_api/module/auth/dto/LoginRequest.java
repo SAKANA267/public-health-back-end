@@ -25,4 +25,16 @@ public class LoginRequest {
      */
     @NotBlank(message = "密码不能为空")
     private String password;
+
+    /**
+     * IP地址（可选）
+     * 用于记录登录历史
+     */
+    private String ipAddress;
+
+    /**
+     * 浏览器信息（可选）
+     * 用于记录登录历史
+     */
+    private String userAgent;
 }

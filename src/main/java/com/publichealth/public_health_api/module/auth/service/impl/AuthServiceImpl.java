@@ -8,6 +8,7 @@ import com.publichealth.public_health_api.module.auth.dto.TokenResponse;
 import com.publichealth.public_health_api.module.auth.entity.RefreshToken;
 import com.publichealth.public_health_api.module.auth.repository.RefreshTokenRepository;
 import com.publichealth.public_health_api.module.auth.service.AuthService;
+import com.publichealth.public_health_api.module.auth.service.LoginHistoryService;
 import com.publichealth.public_health_api.module.sysuser.entity.SysUser;
 import com.publichealth.public_health_api.module.sysuser.repository.SysUserRepository;
 import com.publichealth.public_health_api.module.sysuser.service.SysUserService;
@@ -35,41 +36,65 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
+    private final LoginHistoryService loginHistoryService;
 
     @Override
     @Transactional
     public TokenResponse login(LoginRequest request) {
         log.info("用户登录: username={}", request.getUsername());
 
-        // 1. 验证用户（包括用户名、密码、状态检查）
-        SysUser user = sysUserService.validateUser(request.getUsername(), request.getPassword());
+        String ipAddress = request.getIpAddress();
+        String userAgent = request.getUserAgent();
 
-        // 3. 生成令牌
-        String accessToken = jwtTokenProvider.generateAccessToken(
-                user.getId(),
-                user.getUsername(),
-                user.getRole().name()
-        );
+        try {
+            // 1. 验证用户（包括用户名、密码、状态检查）
+            SysUser user = sysUserService.validateUser(request.getUsername(), request.getPassword());
 
-        String refreshToken = jwtTokenProvider.generateRefreshToken(
-                user.getId(),
-                user.getUsername()
-        );
+            // 2. 生成令牌
+            String accessToken = jwtTokenProvider.generateAccessToken(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getRole().name()
+            );
 
-        // 4. 保存刷新令牌
-        saveRefreshToken(user.getId(), refreshToken);
+            String refreshToken = jwtTokenProvider.generateRefreshToken(
+                    user.getId(),
+                    user.getUsername()
+            );
 
-        // 5. 更新最后登录时间
-        sysUserService.updateLastLoginTime(user.getId());
+            // 3. 保存刷新令牌
+            saveRefreshToken(user.getId(), refreshToken);
 
-        log.info("用户登录成功: userId={}, username={}", user.getId(), user.getUsername());
+            // 4. 更新最后登录时间
+            sysUserService.updateLastLoginTime(user.getId());
 
-        return TokenResponse.of(
-                accessToken,
-                refreshToken,
-                15 * 60L, // 15分钟
-                user
-        );
+            // 5. 记录登录成功历史
+            loginHistoryService.recordLoginSuccess(
+                    user.getId(),
+                    user.getUsername(),
+                    ipAddress,
+                    userAgent
+            );
+
+            log.info("用户登录成功: userId={}, username={}", user.getId(), user.getUsername());
+
+            return TokenResponse.of(
+                    accessToken,
+                    refreshToken,
+                    15 * 60L, // 15分钟
+                    user
+            );
+        } catch (BusinessException e) {
+            // 记录登录失败历史
+            loginHistoryService.recordLoginFailure(
+                    null,
+                    request.getUsername(),
+                    ipAddress,
+                    userAgent,
+                    e.getMessage()
+            );
+            throw e;
+        }
     }
 
     @Override
