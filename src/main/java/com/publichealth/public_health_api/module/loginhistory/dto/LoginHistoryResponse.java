@@ -1,6 +1,6 @@
-package com.publichealth.public_health_api.module.auth.dto;
+package com.publichealth.public_health_api.module.loginhistory.dto;
 
-import com.publichealth.public_health_api.module.auth.entity.LoginHistory;
+import com.publichealth.public_health_api.module.loginhistory.enums.LoginStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -56,7 +56,7 @@ public class LoginHistoryResponse {
     /**
      * 登录状态
      */
-    private LoginHistory.LoginStatus status;
+    private LoginStatus status;
 
     /**
      * 失败原因

@@ -1,11 +1,12 @@
-package com.publichealth.public_health_api.module.auth.service.impl;
+package com.publichealth.public_health_api.module.loginhistory.service.impl;
 
 import com.publichealth.public_health_api.common.PageResult;
-import com.publichealth.public_health_api.module.auth.dto.LoginHistoryQueryRequest;
-import com.publichealth.public_health_api.module.auth.dto.LoginHistoryResponse;
-import com.publichealth.public_health_api.module.auth.entity.LoginHistory;
-import com.publichealth.public_health_api.module.auth.repository.LoginHistoryRepository;
-import com.publichealth.public_health_api.module.auth.service.LoginHistoryService;
+import com.publichealth.public_health_api.module.loginhistory.dto.LoginHistoryQueryRequest;
+import com.publichealth.public_health_api.module.loginhistory.dto.LoginHistoryResponse;
+import com.publichealth.public_health_api.module.loginhistory.entity.LoginHistory;
+import com.publichealth.public_health_api.module.loginhistory.enums.LoginStatus;
+import com.publichealth.public_health_api.module.loginhistory.repository.LoginHistoryRepository;
+import com.publichealth.public_health_api.module.loginhistory.service.LoginHistoryService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +52,7 @@ public class LoginHistoryServiceImpl implements LoginHistoryService {
         loginHistory.setIpAddress(ipAddress);
         loginHistory.setUserAgent(userAgent);
         loginHistory.setLoginLocation(loginLocation);
-        loginHistory.setStatus(LoginHistory.LoginStatus.SUCCESS);
+        loginHistory.setStatus(LoginStatus.SUCCESS);
         loginHistory.setLoginTime(LocalDateTime.now());
 
         loginHistoryRepository.save(loginHistory);
@@ -74,7 +75,7 @@ public class LoginHistoryServiceImpl implements LoginHistoryService {
         loginHistory.setUsername(username);
         loginHistory.setIpAddress(ipAddress);
         loginHistory.setUserAgent(userAgent);
-        loginHistory.setStatus(LoginHistory.LoginStatus.FAILURE);
+        loginHistory.setStatus(LoginStatus.FAILURE);
         loginHistory.setFailReason(failReason);
         loginHistory.setLoginTime(LocalDateTime.now());
 

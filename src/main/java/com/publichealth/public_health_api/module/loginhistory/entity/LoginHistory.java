@@ -1,5 +1,6 @@
-package com.publichealth.public_health_api.module.auth.entity;
+package com.publichealth.public_health_api.module.loginhistory.entity;
 
+import com.publichealth.public_health_api.module.loginhistory.enums.LoginStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,24 +23,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginHistory {
-
-    // ============================================
-    // 枚举定义
-    // ============================================
-
-    /**
-     * 登录状态枚举
-     */
-    public enum LoginStatus {
-        /**
-         * 登录成功
-         */
-        SUCCESS,
-        /**
-         * 登录失败
-         */
-        FAILURE
-    }
 
     // ============================================
     // 主键字段

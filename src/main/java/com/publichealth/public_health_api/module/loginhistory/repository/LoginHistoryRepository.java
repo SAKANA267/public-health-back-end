@@ -1,6 +1,7 @@
-package com.publichealth.public_health_api.module.auth.repository;
+package com.publichealth.public_health_api.module.loginhistory.repository;
 
-import com.publichealth.public_health_api.module.auth.entity.LoginHistory;
+import com.publichealth.public_health_api.module.loginhistory.entity.LoginHistory;
+import com.publichealth.public_health_api.module.loginhistory.enums.LoginStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -37,7 +38,7 @@ public interface LoginHistoryRepository extends JpaRepository<LoginHistory, Stri
      * @param status 登录状态
      * @return 登录历史列表
      */
-    List<LoginHistory> findByUserIdAndStatusOrderByLoginTimeDesc(String userId, LoginHistory.LoginStatus status);
+    List<LoginHistory> findByUserIdAndStatusOrderByLoginTimeDesc(String userId, LoginStatus status);
 
     /**
      * 分页查询用户登录历史
@@ -56,7 +57,7 @@ public interface LoginHistoryRepository extends JpaRepository<LoginHistory, Stri
      * @param pageable 分页参数
      * @return 登录历史分页结果
      */
-    Page<LoginHistory> findByUserIdAndStatusOrderByLoginTimeDesc(String userId, LoginHistory.LoginStatus status, Pageable pageable);
+    Page<LoginHistory> findByUserIdAndStatusOrderByLoginTimeDesc(String userId, LoginStatus status, Pageable pageable);
 
     // ============================================
     // 统计查询
@@ -77,7 +78,7 @@ public interface LoginHistoryRepository extends JpaRepository<LoginHistory, Stri
      * @param status 登录状态
      * @return 登录次数
      */
-    long countByUserIdAndStatus(String userId, LoginHistory.LoginStatus status);
+    long countByUserIdAndStatus(String userId, LoginStatus status);
 
     /**
      * 统计指定时间范围内的登录失败次数

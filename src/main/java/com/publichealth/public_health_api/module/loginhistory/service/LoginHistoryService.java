@@ -1,8 +1,8 @@
-package com.publichealth.public_health_api.module.auth.service;
+package com.publichealth.public_health_api.module.loginhistory.service;
 
 import com.publichealth.public_health_api.common.PageResult;
-import com.publichealth.public_health_api.module.auth.dto.LoginHistoryQueryRequest;
-import com.publichealth.public_health_api.module.auth.dto.LoginHistoryResponse;
+import com.publichealth.public_health_api.module.loginhistory.dto.LoginHistoryQueryRequest;
+import com.publichealth.public_health_api.module.loginhistory.dto.LoginHistoryResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;

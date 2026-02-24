@@ -1,10 +1,10 @@
-package com.publichealth.public_health_api.module.auth.controller;
+package com.publichealth.public_health_api.module.loginhistory.controller;
 
 import com.publichealth.public_health_api.common.ApiResponse;
 import com.publichealth.public_health_api.common.PageResult;
-import com.publichealth.public_health_api.module.auth.dto.LoginHistoryQueryRequest;
-import com.publichealth.public_health_api.module.auth.dto.LoginHistoryResponse;
-import com.publichealth.public_health_api.module.auth.service.LoginHistoryService;
+import com.publichealth.public_health_api.module.loginhistory.dto.LoginHistoryQueryRequest;
+import com.publichealth.public_health_api.module.loginhistory.dto.LoginHistoryResponse;
+import com.publichealth.public_health_api.module.loginhistory.service.LoginHistoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/auth/login-history")
+@RequestMapping("/api/login-history")
 @RequiredArgsConstructor
 public class LoginHistoryController {
 
@@ -30,7 +30,7 @@ public class LoginHistoryController {
 
     /**
      * 分页查询用户登录历史
-     * GET /api/auth/login-history
+     * GET /api/login-history
      *
      * @param request 查询请求
      * @return 分页结果
@@ -47,7 +47,7 @@ public class LoginHistoryController {
 
     /**
      * 获取用户所有登录历史
-     * GET /api/auth/login-history/user/{userId}
+     * GET /api/login-history/user/{userId}
      *
      * @param userId 用户ID
      * @return 登录历史列表
@@ -62,7 +62,7 @@ public class LoginHistoryController {
 
     /**
      * 获取用户最近的登录记录
-     * GET /api/auth/login-history/recent?userId=xxx&limit=10
+     * GET /api/login-history/recent?userId=xxx&limit=10
      *
      * @param userId 用户ID
      * @param limit  限制数量，默认10
@@ -80,7 +80,7 @@ public class LoginHistoryController {
 
     /**
      * 获取用户最后一次成功登录记录
-     * GET /api/auth/login-history/last-success/{userId}
+     * GET /api/login-history/last-success/{userId}
      *
      * @param userId 用户ID
      * @return 最后一次成功登录记录
@@ -99,7 +99,7 @@ public class LoginHistoryController {
 
     /**
      * 统计用户登录次数
-     * GET /api/auth/login-history/count/{userId}
+     * GET /api/login-history/count/{userId}
      *
      * @param userId 用户ID
      * @return 登录次数
@@ -118,7 +118,7 @@ public class LoginHistoryController {
 
     /**
      * 删除用户的所有登录历史
-     * DELETE /api/auth/login-history/user/{userId}
+     * DELETE /api/login-history/user/{userId}
      *
      * @param userId 用户ID
      * @return 删除的记录数

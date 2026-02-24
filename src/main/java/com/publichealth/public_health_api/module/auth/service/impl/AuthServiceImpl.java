@@ -8,7 +8,7 @@ import com.publichealth.public_health_api.module.auth.dto.TokenResponse;
 import com.publichealth.public_health_api.module.auth.entity.RefreshToken;
 import com.publichealth.public_health_api.module.auth.repository.RefreshTokenRepository;
 import com.publichealth.public_health_api.module.auth.service.AuthService;
-import com.publichealth.public_health_api.module.auth.service.LoginHistoryService;
+import com.publichealth.public_health_api.module.loginhistory.service.LoginHistoryService;
 import com.publichealth.public_health_api.module.sysuser.entity.SysUser;
 import com.publichealth.public_health_api.module.sysuser.repository.SysUserRepository;
 import com.publichealth.public_health_api.module.sysuser.service.SysUserService;

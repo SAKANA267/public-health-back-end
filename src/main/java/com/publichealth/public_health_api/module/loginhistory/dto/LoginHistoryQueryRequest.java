@@ -1,6 +1,6 @@
-package com.publichealth.public_health_api.module.auth.dto;
+package com.publichealth.public_health_api.module.loginhistory.dto;
 
-import com.publichealth.public_health_api.module.auth.entity.LoginHistory;
+import com.publichealth.public_health_api.module.loginhistory.enums.LoginStatus;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -28,7 +28,7 @@ public class LoginHistoryQueryRequest {
      * 登录状态（可选）
      * 不传则查询所有状态
      */
-    private LoginHistory.LoginStatus status;
+    private LoginStatus status;
 
     /**
      * 开始时间（可选）
