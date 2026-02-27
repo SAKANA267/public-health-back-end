@@ -54,6 +54,19 @@
 			<artifactId>spring-boot-starter-aop</artifactId>
 		</dependency>
 
+		<!-- WebFlux for WebClient (用于调用 LLM API) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+
+		<!-- ZhipuAI SDK (智谱AI) -->
+		<dependency>
+			<groupId>ai.z.openapi</groupId>
+			<artifactId>zai-sdk</artifactId>
+			<version>0.3.3</version>
+		</dependency>
+
 		<!-- JWT -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
