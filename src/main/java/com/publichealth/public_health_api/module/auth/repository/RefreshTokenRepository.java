@@ -2,6 +2,7 @@ package com.publichealth.public_health_api.module.auth.repository;
 
 import com.publichealth.public_health_api.module.auth.entity.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -59,12 +60,14 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Stri
     /**
      * 删除用户的所有刷新令牌（逻辑删除）
      */
+    @Modifying
     @Query("UPDATE RefreshToken rt SET rt.deleted = true WHERE rt.userId = :userId")
     void revokeAllUserTokens(@Param("userId") String userId);
 
     /**
      * 删除指定的刷新令牌（逻辑删除）
      */
+    @Modifying
     @Query("UPDATE RefreshToken rt SET rt.deleted = true WHERE rt.token = :token")
     void revokeToken(@Param("token") String token);
 

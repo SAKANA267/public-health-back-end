@@ -108,13 +108,14 @@ public class IntentExecutorServiceImpl implements IntentExecutorService {
 
     /**
      * 根据实体类型获取前端路由
+     * 路由映射需与前端保持一致
      */
     private String getRouteForEntity(EntityType entity) {
         return switch (entity) {
-            case REPORT_CARD -> "/report-cards";
-            case USER -> "/users";
-            case OBJECT -> "/objects";
-            case AUDIT -> "/audit";
+            case REPORT_CARD -> "/objectManagement";
+            case USER -> "/userManagement";
+            case OBJECT -> "/objectManagement";
+            case AUDIT -> "/auditManagement";
         };
     }
 }
