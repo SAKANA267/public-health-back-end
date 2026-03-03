@@ -216,7 +216,7 @@ public class OperationLogAspect {
      */
     private String getRealUsername(String userId) {
         if (userId == null || userId.isEmpty()) {
-            throw new IllegalArgumentException("用户ID不能为空，请设置请求头 X-User-Id");
+            return "未知用户";
         }
 
         try {
@@ -224,19 +224,17 @@ public class OperationLogAspect {
             if (userId.matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
                 return userRepository.findUserByIdWithDetails(userId)
                         .map(SysUser::getUsername)
-                        .orElseThrow(() -> new IllegalArgumentException("用户不存在: " + userId));
+                        .orElse(userId);
             }
 
             // 非UUID格式：通过username查询
             return userRepository.findByUsernameAndDeletedFalse(userId)
                     .map(SysUser::getUsername)
-                    .orElseThrow(() -> new IllegalArgumentException("用户不存在: " + userId));
+                    .orElse(userId);
 
-        } catch (IllegalArgumentException e) {
-            throw e;
         } catch (Exception e) {
-            log.error("查询用户失败: userId={}", userId, e);
-            throw new IllegalArgumentException("查询用户失败: " + userId, e);
+            log.warn("查询用户失败，使用userId作为username: userId={}", userId, e);
+            return userId;
         }
     }
 }

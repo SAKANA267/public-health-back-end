@@ -104,6 +104,7 @@ public class LlmClientImpl implements LlmClient {
                         intent.getEntity() != null ? intent.getEntity().getName() : "");
                 case QUERY -> "为您查询相关数据...";
                 case COUNT -> String.format("当前共有 %d 条数据", 0); // 需要实际查询
+                case DELETE -> "正在删除...";
                 case HELP -> """
                         我可以帮您：
                         - 导航到各个页面
@@ -126,6 +127,7 @@ public class LlmClientImpl implements LlmClient {
             case NAVIGATE -> List.of("查看详情", "导出数据", "返回");
             case CREATE -> List.of("继续添加", "查看列表", "返回");
             case QUERY -> List.of("筛选数据", "导出报表", "新增数据");
+            case DELETE -> List.of("确认删除", "取消", "返回列表");
             case COUNT -> List.of("查看列表", "统计分析", "导出报表");
             default -> List.of("查看帮助");
         };
@@ -169,6 +171,17 @@ public class LlmClientImpl implements LlmClient {
                     .entity(entity)
                     .params(params)
                     .confidence(0.85)
+                    .build();
+        }
+
+        // 删除意图
+        if (msg.contains("删除") || msg.contains("移除") || msg.contains("删除掉")) {
+            EntityType entity = extractEntity(message);
+            return IntentResponse.builder()
+                    .intent(IntentType.DELETE)
+                    .entity(entity)
+                    .params(Map.of("originalMessage", message))
+                    .confidence(0.9)
                     .build();
         }
 

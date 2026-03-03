@@ -74,7 +74,7 @@ public class SysUserServiceImpl implements SysUserService {
 
     @Override
     public SysUserDTO getUserById(String id) {
-        SysUser user = userRepository.findById(id)
+        SysUser user = userRepository.findUserByIdWithDetails(id)
                 .orElseThrow(() -> new BusinessException("用户不存在"));
         return SysUserDTO.fromEntity(user);
     }
@@ -91,7 +91,7 @@ public class SysUserServiceImpl implements SysUserService {
     public SysUserDTO updateUser(String id, UpdateUserRequest request) {
         log.info("更新用户信息: id={}", id);
 
-        SysUser user = userRepository.findById(id)
+        SysUser user = userRepository.findUserByIdWithDetails(id)
                 .orElseThrow(() -> new BusinessException("用户不存在"));
 
         // 更新邮箱时检查是否重复
@@ -130,7 +130,7 @@ public class SysUserServiceImpl implements SysUserService {
     public void deleteUser(String id) {
         log.info("删除用户: id={}", id);
 
-        SysUser user = userRepository.findById(id)
+        SysUser user = userRepository.findUserByIdWithDetails(id)
                 .orElseThrow(() -> new BusinessException("用户不存在"));
 
         // 逻辑删除
@@ -187,7 +187,7 @@ public class SysUserServiceImpl implements SysUserService {
             page = userRepository.findAll(pageable);
         } else {
             // 默认查询未删除的用户
-            page = userRepository.findAll(pageable);
+            page = userRepository.findByDeletedFalse(pageable);
         }
 
         // 转换为DTO
@@ -228,7 +228,7 @@ public class SysUserServiceImpl implements SysUserService {
     public void activateUser(String id) {
         log.info("启用用户: id={}", id);
 
-        SysUser user = userRepository.findById(id)
+        SysUser user = userRepository.findUserByIdWithDetails(id)
                 .orElseThrow(() -> new BusinessException("用户不存在"));
 
         user.setStatus(SysUser.UserStatus.ACTIVE);
@@ -240,7 +240,7 @@ public class SysUserServiceImpl implements SysUserService {
     public void deactivateUser(String id) {
         log.info("停用用户: id={}", id);
 
-        SysUser user = userRepository.findById(id)
+        SysUser user = userRepository.findUserByIdWithDetails(id)
                 .orElseThrow(() -> new BusinessException("用户不存在"));
 
         user.setStatus(SysUser.UserStatus.INACTIVE);
@@ -265,7 +265,7 @@ public class SysUserServiceImpl implements SysUserService {
     public void changePassword(String id, ChangePasswordRequest request) {
         log.info("修改密码: id={}", id);
 
-        SysUser user = userRepository.findById(id)
+        SysUser user = userRepository.findUserByIdWithDetails(id)
                 .orElseThrow(() -> new BusinessException("用户不存在"));
 
         // 验证原密码
@@ -285,7 +285,7 @@ public class SysUserServiceImpl implements SysUserService {
     public void resetPassword(String id, String newPassword) {
         log.info("重置密码: id={}", id);
 
-        SysUser user = userRepository.findById(id)
+        SysUser user = userRepository.findUserByIdWithDetails(id)
                 .orElseThrow(() -> new BusinessException("用户不存在"));
 
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -330,12 +330,12 @@ public class SysUserServiceImpl implements SysUserService {
 
     @Override
     public boolean existsByUsername(String username) {
-        return userRepository.existsByUsername(username);
+        return userRepository.existsByUsernameAndDeletedFalse(username);
     }
 
     @Override
     public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
+        return userRepository.existsByEmailAndDeletedFalse(email);
     }
 
     @Override

@@ -106,6 +106,11 @@ public interface SysUserRepository extends JpaRepository<SysUser, String> {
      */
     List<SysUser> findByDeletedTrue();
 
+    /**
+     * 查询所有未删除的用户 (分页)
+     */
+    Page<SysUser> findByDeletedFalse(Pageable pageable);
+
     // ============================================
     // 时间范围查询
     // ============================================
@@ -179,9 +184,23 @@ public interface SysUserRepository extends JpaRepository<SysUser, String> {
     boolean existsByUsername(String username);
 
     /**
+     * 检查用户名是否存在（仅未删除用户）
+     */
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM SysUser u " +
+           "WHERE u.username = :username AND u.deleted = false")
+    boolean existsByUsernameAndDeletedFalse(@Param("username") String username);
+
+    /**
      * 检查邮箱是否存在
      */
     boolean existsByEmail(String email);
+
+    /**
+     * 检查邮箱是否存在（仅未删除用户）
+     */
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM SysUser u " +
+           "WHERE u.email = :email AND u.deleted = false")
+    boolean existsByEmailAndDeletedFalse(@Param("email") String email);
 
     /**
      * 检查用户名是否存在 (排除指定ID)
