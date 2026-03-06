@@ -12,6 +12,11 @@ import java.util.Map;
 public class ExecuteRequest {
 
     /**
+     * 会话 ID（可选）
+     */
+    private String sessionId;
+
+    /**
      * 意图类型
      */
     @NotBlank(message = "意图类型不能为空")
