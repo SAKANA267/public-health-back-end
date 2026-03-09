@@ -39,7 +39,7 @@ public class AiController {
     @PostMapping("/chat")
     public ApiResponse<AiResponse> chat(@Valid @RequestBody ChatRequest request) {
         String userId = UserContext.getUserId();
-        log.info("📨 收到聊天请求: userId={}, message={}", userId, request.getMessage());
+        log.info("收到聊天请求: userId={}, message={}", userId, request.getMessage());
         AiResponse response = aiService.chat(request, userId);
         return ApiResponse.success(response);
     }
@@ -55,7 +55,7 @@ public class AiController {
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> chatStream(@Valid @RequestBody ChatRequest request) {
         String userId = UserContext.getUserId();
-        log.info("📨 收到流式聊天请求: userId={}, message={}", userId, request.getMessage());
+        log.info("收到流式聊天请求: userId={}, message={}", userId, request.getMessage());
         return aiService.chatStream(request, userId);
     }
 
@@ -67,7 +67,7 @@ public class AiController {
      */
     @PostMapping("/intent")
     public ApiResponse<IntentResult> recognizeIntent(@Valid @RequestBody IntentRequest request) {
-        log.info("📨 收到意图识别请求: message={}", request.getMessage());
+        log.info("收到意图识别请求: message={}", request.getMessage());
         IntentResult response = aiService.recognizeIntent(request.getMessage());
         return ApiResponse.success(response);
     }
@@ -80,7 +80,7 @@ public class AiController {
      */
     @PostMapping("/execute")
     public ApiResponse<AiResponse> execute(@Valid @RequestBody ExecuteRequest request) {
-        log.info("📨 收到意图执行请求: intent={}, entity={}", request.getIntent(), request.getEntity());
+        log.info("收到意图执行请求: intent={}, entity={}", request.getIntent(), request.getEntity());
         AiResponse response = aiService.executeIntent(request);
         return ApiResponse.success(response);
     }
@@ -93,7 +93,7 @@ public class AiController {
      */
     @PostMapping("/sessions")
     public ApiResponse<SessionResponse> createSession(@RequestBody CreateSessionRequest request) {
-        log.info("📨 收到创建会话请求: userId={}", request.getUserId());
+        log.info("收到创建会话请求: userId={}", request.getUserId());
         SessionResponse response = aiService.createSession(request);
         return ApiResponse.success(response);
     }
@@ -106,7 +106,7 @@ public class AiController {
      */
     @GetMapping("/sessions/{sessionId}")
     public ApiResponse<SessionDetailResponse> getSession(@PathVariable String sessionId) {
-        log.info("📨 收到获取会话请求: sessionId={}", sessionId);
+        log.info("收到获取会话请求: sessionId={}", sessionId);
         SessionDetailResponse response = aiService.getSessionDetail(sessionId);
         return ApiResponse.success(response);
     }
@@ -119,7 +119,7 @@ public class AiController {
      */
     @DeleteMapping("/sessions/{sessionId}")
     public ApiResponse<Void> deleteSession(@PathVariable String sessionId) {
-        log.info("📨 收到删除会话请求: sessionId={}", sessionId);
+        log.info("收到删除会话请求: sessionId={}", sessionId);
         aiService.deleteSession(sessionId);
         return ApiResponse.success("会话已删除");
     }

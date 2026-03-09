@@ -2,6 +2,7 @@ package com.publichealth.public_health_api.module.ai.service;
 
 import com.publichealth.public_health_api.module.ai.dto.AiResponse;
 import com.publichealth.public_health_api.module.ai.dto.IntentResult;
+import com.publichealth.public_health_api.module.ai.dto.StructuredChatResponse;
 import com.publichealth.public_health_api.module.ai.dto.request.ChatRequest;
 import com.publichealth.public_health_api.module.ai.dto.request.CreateSessionRequest;
 import com.publichealth.public_health_api.module.ai.dto.request.ExecuteRequest;
@@ -41,7 +42,7 @@ public class SpringAiChatService {
 
     @Retryable(retryFor = {AiServiceUnavailableException.class}, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public AiResponse chat(ChatRequest request, String userId) {
-        log.info("🤖 [Spring AI] 聊天请求: userId={}, message={}", userId, request.getMessage());
+        log.info("[Spring AI] 聊天请求: userId={}, message={}", userId, request.getMessage());
         String sessionId = request.getSessionId();
         if (sessionId == null || sessionId.isEmpty()) {
             sessionId = createSessionInternal(userId);
@@ -49,16 +50,27 @@ public class SpringAiChatService {
         final String conversationId = sessionId;
         long startTime = System.currentTimeMillis();
         try {
-            String response = chatClient.prompt()
+            StructuredChatResponse structuredResponse = chatClient.prompt()
                     .user(request.getMessage())
                     .advisors(spec -> spec.param("chat_memory_conversation_id", conversationId))
                     .call()
-                    .content();
+                    .entity(StructuredChatResponse.class);
             long duration = System.currentTimeMillis() - startTime;
-            log.info("✅ [Spring AI] LLM 响应完成: {}ms", duration);
-            List<String> suggestions = generateSuggestions(response);
+            log.info("[Spring AI] LLM 响应完成: {}ms", duration);
+            log.info("[Spring AI] AI返回值: message={}, action={}", structuredResponse.message(), structuredResponse.action());
+
+            // 转换为AiResponse
+            AiResponse.Action action = null;
+            if (structuredResponse.action() != null && structuredResponse.action().type() != null) {
+                action = new AiResponse.Action(
+                        structuredResponse.action().type(),
+                        new AiResponse.MapWrapper(structuredResponse.action().payload())
+                );
+            }
+
+            List<String> suggestions = generateSuggestions(structuredResponse.message());
             updateSessionMetadata(sessionId, request.getMessage());
-            return new AiResponse(response, null, suggestions, sessionId);
+            return new AiResponse(structuredResponse.message(), action, suggestions, sessionId);
         } catch (RuntimeException e) {
             if (isNetworkRelatedException(e)) {
                 log.error("AI 模型调用失败: {}", e.getMessage(), e);
@@ -70,7 +82,7 @@ public class SpringAiChatService {
     }
 
     public Flux<String> chatStream(ChatRequest request, String userId) {
-        log.info("🤖 [Spring AI] 流式聊天请求: userId={}, message={}", userId, request.getMessage());
+        log.info("[Spring AI] 流式聊天请求: userId={}, message={}", userId, request.getMessage());
         String sessionId = request.getSessionId();
         if (sessionId == null || sessionId.isEmpty()) {
             sessionId = createSessionInternal(userId);
@@ -86,22 +98,22 @@ public class SpringAiChatService {
                 .content()
                 .doOnComplete(() -> {
                     long duration = System.currentTimeMillis() - startTime;
-                    log.info("✅ [Spring AI] 流式响应完成: {}ms", duration);
+                    log.info("[Spring AI] 流式响应完成: {}ms", duration);
                     updateSessionMetadata(finalSessionId, firstMessage);
                 })
-                .doOnError(e -> log.error("❌ [Spring AI] 流式响应失败: {}", e.getMessage(), e));
+                .doOnError(e -> log.error("[Spring AI] 流式响应失败: {}", e.getMessage(), e));
     }
 
     @Retryable(retryFor = {AiServiceUnavailableException.class}, maxAttempts = 2, backoff = @Backoff(delay = 500))
     public IntentResult recognizeIntent(String userMessage) {
-        log.info("🤖 [Spring AI] 意图识别请求: message={}", userMessage);
+        log.info("[Spring AI] 意图识别请求: message={}", userMessage);
         try {
             IntentResult result = intentRecognitionClient.prompt()
                     .user(userMessage)
                     .call()
                     .entity(IntentResult.class);
-            log.info("✅ [Spring AI] 意图识别完成: intent={}, entity={}, confidence={}",
-                    result.intent(), result.entity(), result.confidence());
+            log.info("[Spring AI] 意图识别完成: intent={}, entity={}, params={}, confidence={}",
+                    result.intent(), result.entity(), result.params(), result.confidence());
             return result;
         } catch (RuntimeException e) {
             if (isNetworkRelatedException(e)) {
@@ -115,14 +127,14 @@ public class SpringAiChatService {
 
     @Retryable(retryFor = {AiServiceUnavailableException.class}, maxAttempts = 2, backoff = @Backoff(delay = 500))
     public AiResponse executeIntent(ExecuteRequest request) {
-        log.info("🤖 [Spring AI] 执行意图: intent={}, entity={}", request.getIntent(), request.getEntity());
+        log.info("[Spring AI] 执行意图: intent={}, entity={}", request.getIntent(), request.getEntity());
         try {
             String naturalQuery = buildNaturalQuery(request);
             String response = chatClient.prompt()
                     .user(naturalQuery)
                     .call()
                     .content();
-            log.info("✅ [Spring AI] 意图执行完成");
+            log.info("[Spring AI] 意图执行完成, AI返回值: {}", response);
             return new AiResponse(response, null, generateSuggestions(response), request.getSessionId());
         } catch (RuntimeException e) {
             if (isNetworkRelatedException(e)) {
@@ -136,12 +148,12 @@ public class SpringAiChatService {
 
     public SessionResponse createSession(CreateSessionRequest request) {
         String sessionId = createSessionInternal(request.getUserId());
-        log.info("✅ [Spring AI] 创建会话: sessionId={}", sessionId);
+        log.info("[Spring AI] 创建会话: sessionId={}", sessionId);
         return new SessionResponse(sessionId, System.currentTimeMillis());
     }
 
     public SessionDetailResponse getSessionDetail(String sessionId) {
-        log.info("🤖 [Spring AI] 获取会话详情: sessionId={}", sessionId);
+        log.info("[Spring AI] 获取会话详情: sessionId={}", sessionId);
         SessionMetadata metadata = sessionMetadata.get(sessionId);
         if (metadata == null) {
             throw new IllegalArgumentException("会话不存在: " + sessionId);
@@ -162,7 +174,7 @@ public class SpringAiChatService {
     }
 
     public void deleteSession(String sessionId) {
-        log.info("🗑️ [Spring AI] 删除会话: sessionId={}", sessionId);
+        log.info("[Spring AI] 删除会话: sessionId={}", sessionId);
         chatMemory.clear(sessionId);
         sessionMetadata.remove(sessionId);
     }

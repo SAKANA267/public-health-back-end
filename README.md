@@ -135,7 +135,7 @@ java -jar target/public-health-api-0.0.1-SNAPSHOT.jar
 - [系统用户 API](./docs/sysuser_api.md)
 - [报告卡 API](./docs/reportcard_api.md)
 - [登录历史 API](./docs/login_history_api.md)
-- [AI 助手 API](./docs/ai_api.md)
+- [AI 助手 API](docs/ai/ai_api.md)
 - [模块设计手册](./docs/module-design-manual.md)
 
 ## 认证机制

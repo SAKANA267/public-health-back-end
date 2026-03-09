@@ -61,11 +61,11 @@ public class SpringAiConfig {
             byte[] intentBytes = FileCopyUtils.copyToByteArray(intentPromptResource.getInputStream());
             intentSystemPrompt = new String(intentBytes, StandardCharsets.UTF_8);
 
-            log.info("✅ Prompt 模板加载成功: assistant_name={}, entities={}", assistantName, entityTypes);
-            log.info("⏱️ AI 调用超时配置: connect={}, read={}, write={}", connectTimeout, readTimeout, writeTimeout);
+            log.info("Prompt 模板加载成功: assistant_name={}, entities={}", assistantName, entityTypes);
+            log.info("AI 调用超时配置: connect={}, read={}, write={}", connectTimeout, readTimeout, writeTimeout);
 
         } catch (Exception e) {
-            log.error("❌ 加载 Prompt 模板失败，使用默认配置", e);
+            log.error("加载 Prompt 模板失败，使用默认配置", e);
             assistantSystemPrompt = getDefaultAssistantPrompt();
             intentSystemPrompt = getDefaultIntentPrompt();
         }
