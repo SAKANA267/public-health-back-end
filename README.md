@@ -18,7 +18,8 @@
 | H2 | - | 测试数据库 |
 | JWT | 0.12.3 | Token 认证 |
 | Lombok | - | 代码简化 |
-| ZhipuAI SDK | 0.3.3 | AI 能力集成 |
+| Spring AI | 1.0.0 | AI 框架 |
+| ZhipuAI | - | LLM 模型（通过 SpringAI 集成） |
 
 ## 功能模块
 
@@ -42,9 +43,10 @@
 - 操作日志查询与统计
 
 ### AI 助手 (`/api/ai`)
-- 智能对话（集成智谱 AI）
+- 智能对话（基于 SpringAI + 智谱 AI）
 - 意图识别
-- 业务实体操作执行
+- 业务实体操作执行（Function Calling）
+- 结构化输出（Structured Output）
 - 会话管理
 
 ## 项目结构
@@ -184,10 +186,9 @@ public ApiResponse<SysUserDTO> createUser(@Valid @RequestBody CreateUserRequest 
 - `spring-boot-starter-security` - 安全框架
 - `spring-boot-starter-validation` - 参数校验
 - `spring-boot-starter-aop` - AOP 支持
-- `spring-boot-starter-webflux` - WebFlux 客户端
 
 ### 第三方依赖
-- `zai-sdk` - 智谱 AI SDK
+- `spring-ai-starter-model-zhipuai` - SpringAI 智谱 AI 集成
 - `jjwt-*` - JWT 实现
 - `lombok` - 代码生成
 - `mysql-connector-j` - MySQL 驱动
