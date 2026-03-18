@@ -158,9 +158,9 @@ public class SysUserServiceImpl implements SysUserService {
 
     @Override
     public PageResult<SysUserDTO> getUserList(UserQueryRequest request) {
-        log.info("查询用户列表: page={}, size={}, keyword={}, role={}, status={}",
+        log.info("查询用户列表: page={}, size={}, keyword={}, role={}, status={}, startTime={}, endTime={}",
                 request.getPage(), request.getSize(), request.getKeyword(),
-                request.getRole(), request.getStatus());
+                request.getRole(), request.getStatus(), request.getStartTime(), request.getEndTime());
 
         // 构建分页参数
         Pageable pageable = PageRequest.of(
@@ -169,26 +169,16 @@ public class SysUserServiceImpl implements SysUserService {
                 Sort.by(Sort.Direction.DESC, "createTime")
         );
 
-        Page<SysUser> page;
-
-        // 根据条件查询
-        if (StringUtils.hasText(request.getKeyword())) {
-            // 关键词搜索
-            List<SysUser> users = userRepository.searchUsers(request.getKeyword());
-            page = createPageFromList(users, pageable);
-        } else if (request.getRole() != null) {
-            // 按角色筛选
-            page = userRepository.findByRoleAndDeletedFalse(request.getRole(), pageable);
-        } else if (request.getStatus() != null) {
-            // 按状态筛选
-            page = userRepository.findByStatusAndDeletedFalse(request.getStatus(), pageable);
-        } else if (Boolean.TRUE.equals(request.getIncludeDeleted())) {
-            // 包含已删除用户
-            page = userRepository.findAll(pageable);
-        } else {
-            // 默认查询未删除的用户
-            page = userRepository.findByDeletedFalse(pageable);
-        }
+        // 统一条件查询
+        Page<SysUser> page = userRepository.findByConditions(
+                request.getKeyword(),
+                request.getRole(),
+                request.getStatus(),
+                request.getStartTime(),
+                request.getEndTime(),
+                request.getIncludeDeleted(),
+                pageable
+        );
 
         // 转换为DTO
         List<SysUserDTO> dtoList = page.getContent().stream()
@@ -341,27 +331,5 @@ public class SysUserServiceImpl implements SysUserService {
     @Override
     public boolean existsByUsernameExcludeId(String username, String excludeId) {
         return userRepository.existsByUsernameAndIdNot(username, excludeId);
-    }
-
-    // ============================================
-    // 私有辅助方法
-    // ============================================
-
-    /**
-     * 从List创建Page对象 (用于搜索结果分页)
-     */
-    private <T> org.springframework.data.domain.Page<T> createPageFromList(List<T> list, Pageable pageable) {
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), list.size());
-
-        if (start >= list.size()) {
-            return org.springframework.data.domain.Page.empty();
-        }
-
-        return new org.springframework.data.domain.PageImpl<>(
-                list.subList(start, end),
-                pageable,
-                list.size()
-        );
     }
 }

@@ -130,6 +130,28 @@ public interface SysUserRepository extends JpaRepository<SysUser, String> {
     // ============================================
 
     /**
+     * 统一条件查询 (支持多条件组合)
+     * 所有条件都是可选的，使用 IS NULL OR 模式实现动态查询
+     */
+    @Query("SELECT u FROM SysUser u WHERE " +
+           "(:includeDeleted = true OR u.deleted = false) AND " +
+           "(:keyword IS NULL OR LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
+           "(:role IS NULL OR u.role = :role) AND " +
+           "(:status IS NULL OR u.status = :status) AND " +
+           "(:startTime IS NULL OR u.createTime >= :startTime) AND " +
+           "(:endTime IS NULL OR u.createTime <= :endTime)")
+    Page<SysUser> findByConditions(
+            @Param("keyword") String keyword,
+            @Param("role") SysUser.UserRole role,
+            @Param("status") SysUser.UserStatus status,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime,
+            @Param("includeDeleted") Boolean includeDeleted,
+            Pageable pageable
+    );
+
+    /**
      * 统计指定角色的用户数量
      */
     @Query("SELECT COUNT(u) FROM SysUser u WHERE u.role = :role AND u.deleted = false")

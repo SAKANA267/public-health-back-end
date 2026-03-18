@@ -156,57 +156,29 @@ public class ReportCardServiceImpl implements ReportCardService {
 
     @Override
     public PageResult<ReportCardDTO> getReportCardList(ReportCardQueryRequest request) {
-        log.info("查询报告卡列表: page={}, size={}", request.getPage(), request.getSize());
+        log.info("查询报告卡列表: page={}, size={}, keyword={}, status={}, hospitalArea={}, department={}, startTime={}, endTime={}",
+                request.getPage(), request.getSize(), request.getKeyword(), request.getStatus(),
+                request.getHospitalArea(), request.getDepartment(), request.getStartTime(), request.getEndTime());
 
         // 构建分页参数
         Pageable pageable = PageRequest.of(
                 request.getPage() - 1,  // Spring Data JPA 页码从0开始
                 request.getSize(),
-                Sort.by(Sort.Direction.DESC, "fillDate", "createTime")
+                Sort.by(Sort.Direction.DESC, "createTime")
         );
 
-        Page<ReportCard> page;
-
-        // 根据条件查询
-        if (StringUtils.hasText(request.getKeyword())) {
-            // 关键词搜索
-            page = repository.searchRecords(request.getKeyword(), pageable);
-        } else if (request.getStatus() != null && request.getFillDateStart() != null && request.getFillDateEnd() != null) {
-            // 状态 + 日期范围
-            LocalDate start = request.getFillDateStart();
-            LocalDate end = LocalDate.parse(request.getFillDateEnd()).plusDays(1);
-            page = repository.findByStatusAndDateRange(request.getStatus(), start, end, pageable);
-        } else if (request.getStatus() != null && StringUtils.hasText(request.getHospitalArea()) && StringUtils.hasText(request.getDepartment())) {
-            // 院区 + 科室 + 状态
-            page = repository.findByHospitalAreaAndDepartmentAndStatus(
-                    request.getHospitalArea(), request.getDepartment(), request.getStatus(), pageable);
-        } else if (request.getStatus() != null && StringUtils.hasText(request.getHospitalArea())) {
-            // 院区 + 状态
-            page = repository.findByHospitalAreaAndStatus(request.getHospitalArea(), request.getStatus(), pageable);
-        } else if (request.getStatus() != null && StringUtils.hasText(request.getDepartment())) {
-            // 科室 + 状态
-            page = repository.findByDepartmentAndStatus(request.getDepartment(), request.getStatus(), pageable);
-        } else if (request.getStatus() != null) {
-            // 仅状态
-            page = repository.findByStatusAndDeletedFalse(request.getStatus(), pageable);
-        } else if (StringUtils.hasText(request.getHospitalArea()) && StringUtils.hasText(request.getDepartment())) {
-            // 院区 + 科室
-            page = repository.findByHospitalAreaAndDepartmentAndDeletedFalse(
-                    request.getHospitalArea(), request.getDepartment(), pageable);
-        } else if (StringUtils.hasText(request.getHospitalArea())) {
-            // 仅院区
-            page = repository.findByHospitalAreaAndDeletedFalse(request.getHospitalArea(), pageable);
-        } else if (StringUtils.hasText(request.getDepartment())) {
-            // 仅科室
-            page = repository.findByDepartmentAndDeletedFalse(request.getDepartment(), pageable);
-        } else {
-            // 默认查询所有未删除的记录
-            if (Boolean.TRUE.equals(request.getIncludeDeleted())) {
-                page = repository.findAll(pageable);
-            } else {
-                page = repository.findByDeletedFalse(pageable);
-            }
-        }
+        // 统一条件查询
+        Page<ReportCard> page = repository.findByConditions(
+                request.getKeyword(),
+                request.getStatus(),
+                request.getHospitalArea(),
+                request.getDepartment(),
+                request.getAuditorId(),
+                request.getStartTime(),
+                request.getEndTime(),
+                request.getIncludeDeleted(),
+                pageable
+        );
 
         // 转换为DTO
         List<ReportCardDTO> dtoList = page.getContent().stream()

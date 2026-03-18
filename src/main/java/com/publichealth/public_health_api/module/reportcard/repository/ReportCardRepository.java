@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -152,6 +153,33 @@ public interface ReportCardRepository extends JpaRepository<ReportCard, String> 
     // ============================================
     // 自定义 JPQL 查询
     // ============================================
+
+    /**
+     * 统一条件查询 (支持多条件组合)
+     * 所有条件都是可选的，使用 IS NULL OR 模式实现动态查询
+     */
+    @Query("SELECT r FROM ReportCard r WHERE " +
+           "(:includeDeleted = true OR r.deleted = false) AND " +
+           "(:keyword IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(r.diagnosisName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(r.inpatientNo) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
+           "(:status IS NULL OR r.status = :status) AND " +
+           "(:hospitalArea IS NULL OR r.hospitalArea = :hospitalArea) AND " +
+           "(:department IS NULL OR r.department = :department) AND " +
+           "(:auditorId IS NULL OR r.auditorId = :auditorId) AND " +
+           "(:startTime IS NULL OR r.createTime >= :startTime) AND " +
+           "(:endTime IS NULL OR r.createTime <= :endTime)")
+    Page<ReportCard> findByConditions(
+            @Param("keyword") String keyword,
+            @Param("status") ReportCard.ReportStatus status,
+            @Param("hospitalArea") String hospitalArea,
+            @Param("department") String department,
+            @Param("auditorId") String auditorId,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime,
+            @Param("includeDeleted") Boolean includeDeleted,
+            Pageable pageable
+    );
 
     /**
      * 搜索报告卡 (模糊匹配患者姓名、诊断名称、住院号)
