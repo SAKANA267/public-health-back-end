@@ -3,7 +3,9 @@
     "allow": [
       "Bash(./mvnw compile:*)",
       "Bash(sed:*)",
-      "Bash(./mvnw clean:*)"
+      "Bash(./mvnw clean:*)",
+      "mcp__dbhub__search_objects",
+      "mcp__dbhub__execute_sql"
     ]
   }
 }
