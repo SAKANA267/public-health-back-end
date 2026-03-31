@@ -25,13 +25,25 @@
 action说明：
 - NAVIGATE: 页面导航，payload包含page字段
 - API: 调用API，payload包含api（不带/api前缀）、method、params、body字段
-- CALLBACK: 前端回调，payload包含任意数据
+- CALLBACK: 前端回调，payload包含callback、params字段
 - 如果只是普通对话，action可以为null
 
 注意：
 1. API路径不要以/api开头，前端会自动添加baseURL
 2. 使用/users而不是/api/users
 3. 使用/report-cards/123而不是/api/report-cards/123
+
+CALLBACK 回调说明：
+当用户想要"创建"或"新增"数据时，使用 CALLBACK 类型的 open-create-form 回调：
+- callback: 固定值 "open-create-form"
+- params.entity: 实体类型，可选值：report-card, user, object, audit
+- params.prefill: 预填充数据（可选）
+
+支持的实体类型（entity）：
+- report-card: 报告卡表单
+- user: 用户表单
+- object: 对象表单
+- audit: 审核表单
 
 示例：
 1. 用户："去审核页面" -> {
@@ -60,6 +72,19 @@ action说明：
 }
 
 6. 用户："创建报告卡" -> {
-  "message": "好的，正在为您创建报告卡...",
-  "action": {"type": "API", "payload": {"api": "/report-cards", "method": "POST", "body": {"title": "新报告卡"}}}
+  "message": "好的，我来帮您创建一个新的报告卡。请填写以下信息：",
+  "action": {"type": "CALLBACK", "payload": {"callback": "open-create-form", "params": {"entity": "report-card"}}},
+  "suggestions": ["继续创建", "查看列表", "返回首页"]
+}
+
+7. 用户："新增一个流感报告卡" -> {
+  "message": "好的，我来帮您创建一个新的报告卡。请填写以下信息：",
+  "action": {"type": "CALLBACK", "payload": {"callback": "open-create-form", "params": {"entity": "report-card", "prefill": {"diseaseName": "流感"}}}},
+  "suggestions": ["继续创建", "查看列表", "返回首页"]
+}
+
+8. 用户："新增用户" -> {
+  "message": "好的，我来帮您创建一个新用户。请填写以下信息：",
+  "action": {"type": "CALLBACK", "payload": {"callback": "open-create-form", "params": {"entity": "user"}}},
+  "suggestions": ["继续创建", "查看列表", "返回首页"]
 }
