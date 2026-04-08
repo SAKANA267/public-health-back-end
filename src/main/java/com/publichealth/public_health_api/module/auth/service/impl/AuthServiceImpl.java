@@ -204,9 +204,17 @@ public class AuthServiceImpl implements AuthService {
                 user.getUsername()
         );
 
-        // 7. 删除旧刷新令牌，保存新刷新令牌
-        revokeRefreshToken(refreshToken);
-        saveRefreshToken(user.getId(), newRefreshToken);
+        // 7. 删除该用户的所有旧刷新令牌，然后保存新令牌
+        // 先删除避免并发时重复键冲突
+        refreshTokenRepository.revokeAllUserTokens(user.getId());
+
+        try {
+            saveRefreshToken(user.getId(), newRefreshToken);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // 如果因唯一键冲突失败，可能是另一个并发请求已保存了相同的token
+            // 这种情况下忽略错误，因为token已经存在
+            log.debug("刷新令牌已存在（并发请求）: userId={}", user.getId());
+        }
 
         log.info("令牌刷新成功: userId={}, username={}", user.getId(), user.getUsername());
 

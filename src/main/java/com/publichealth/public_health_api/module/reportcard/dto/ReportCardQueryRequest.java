@@ -49,9 +49,14 @@ public class ReportCardQueryRequest {
     // ============================================
 
     /**
-     * 状态筛选
+     * 审核状态筛选
      */
     private ReportCard.ReportStatus status;
+
+    /**
+     * 分配状态筛选
+     */
+    private ReportCard.AssignStatus assignStatus;
 
     /**
      * 院区筛选

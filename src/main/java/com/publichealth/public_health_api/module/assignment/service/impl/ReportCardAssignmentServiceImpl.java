@@ -61,17 +61,49 @@ public class ReportCardAssignmentServiceImpl implements ReportCardAssignmentServ
             throw new BusinessException("审核组未启用");
         }
 
-        // 检查是否已有进行中的任务
-        assignmentRepository
-                .findByReportCardIdAndDeletedFalseAndStatusNot(
+        // 检查是否已有进行中的任务（排除已过期的任务）
+        List<ReportCardAssignment> existingAssignments = assignmentRepository
+                .findAllByReportCardIdAndDeletedFalseAndStatusNot(
                         request.getReportCardId(),
-                        ReportCardAssignment.AssignmentStatus.COMPLETED)
-                .ifPresent(existing -> {
-                    throw new BusinessException("该报卡已有进行中的任务");
-                });
+                        ReportCardAssignment.AssignmentStatus.COMPLETED);
+
+        // 处理所有已存在的分配记录
+        boolean hasUnexpiredTask = false;
+        for (ReportCardAssignment existing : existingAssignments) {
+            // 检查任务是否已过期
+            boolean isExpired = existing.getDeadline() != null
+                    && existing.getDeadline().isBefore(LocalDateTime.now());
+
+            if (isExpired) {
+                // 任务已过期，取消旧任务
+                log.info("检测到过期任务，自动取消: assignmentId={}, reportCardId={}",
+                        existing.getId(), request.getReportCardId());
+                existing.setStatus(ReportCardAssignment.AssignmentStatus.CANCELLED);
+                existing.setRejectReason("任务过期，系统自动取消");
+                assignmentRepository.save(existing);
+            } else {
+                // 任务未过期，标记为有未过期任务
+                hasUnexpiredTask = true;
+            }
+        }
+
+        // 如果有未过期的任务，拒绝操作
+        if (hasUnexpiredTask) {
+            throw new BusinessException("该报卡已有进行中的任务");
+        }
+
+        // 如果取消了所有过期任务，更新报卡状态为未分配
+        if (!existingAssignments.isEmpty()) {
+            ReportCard card = reportCardRepository.findById(request.getReportCardId()).orElse(null);
+            if (card != null) {
+                card.setAssignStatus(ReportCard.AssignStatus.UNASSIGNED);
+                reportCardRepository.save(card);
+            }
+        }
 
         // 创建分配记录
         ReportCardAssignment assignment = new ReportCardAssignment();
+        assignment.setId(java.util.UUID.randomUUID().toString()); // 手动生成ID
         assignment.setReportCardId(request.getReportCardId());
         assignment.setAuditGroupId(request.getAuditGroupId());
         assignment.setAssignerId(operatorId);
@@ -81,6 +113,10 @@ public class ReportCardAssignmentServiceImpl implements ReportCardAssignmentServ
         assignment.setStatus(ReportCardAssignment.AssignmentStatus.PENDING);
 
         assignmentRepository.save(assignment);
+
+        // 更新报卡分配状态为已分配
+        reportCard.setAssignStatus(ReportCard.AssignStatus.ASSIGNED);
+        reportCardRepository.save(reportCard);
 
         // 更新统计
         workStatsService.updateStats(request.getAuditGroupId());
@@ -160,6 +196,12 @@ public class ReportCardAssignmentServiceImpl implements ReportCardAssignmentServ
         assignment.setAcceptTime(LocalDateTime.now());
         assignmentRepository.save(assignment);
 
+        // 更新报卡分配状态为处理中
+        ReportCard reportCard = reportCardRepository.findById(assignment.getReportCardId())
+                .orElseThrow(() -> new BusinessException("报卡不存在"));
+        reportCard.setAssignStatus(ReportCard.AssignStatus.IN_PROGRESS);
+        reportCardRepository.save(reportCard);
+
         // 更新统计
         workStatsService.updateStats(assignment.getAuditGroupId());
 
@@ -190,7 +232,8 @@ public class ReportCardAssignmentServiceImpl implements ReportCardAssignmentServ
         // 更新报卡状态
         ReportCard reportCard = reportCardRepository.findById(assignment.getReportCardId())
                 .orElseThrow(() -> new BusinessException("报卡不存在"));
-        reportCard.setStatus(ReportCard.ReportStatus.APPROVED);
+        reportCard.setAssignStatus(ReportCard.AssignStatus.COMPLETED);
+        reportCard.setAuditStatus(ReportCard.ReportStatus.APPROVED);
         reportCard.setAuditorId(operatorId);
         reportCard.setAuditDate(LocalDateTime.now().toLocalDate());
         reportCardRepository.save(reportCard);
@@ -218,6 +261,12 @@ public class ReportCardAssignmentServiceImpl implements ReportCardAssignmentServ
         assignment.setStatus(ReportCardAssignment.AssignmentStatus.CANCELLED);
         assignment.setRejectReason(request.getRemark());
         assignmentRepository.save(assignment);
+
+        // 更新报卡分配状态为未分配
+        ReportCard reportCard = reportCardRepository.findById(assignment.getReportCardId())
+                .orElseThrow(() -> new BusinessException("报卡不存在"));
+        reportCard.setAssignStatus(ReportCard.AssignStatus.UNASSIGNED);
+        reportCardRepository.save(reportCard);
 
         // 更新统计
         workStatsService.updateStats(assignment.getAuditGroupId());

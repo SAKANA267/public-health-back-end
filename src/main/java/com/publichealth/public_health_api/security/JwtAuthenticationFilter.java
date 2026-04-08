@@ -45,6 +45,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String username = jwtTokenProvider.getUsernameFromToken(token);
                 String role = jwtTokenProvider.getRoleFromToken(token);
 
+                // 设置 request attribute 供 Controller 使用
+                request.setAttribute("userId", userId);
+                request.setAttribute("username", username);
+                request.setAttribute("role", role);
+
                 // 设置用户上下文
                 UserContext.setUserId(userId);
                 UserContext.setUsername(username);

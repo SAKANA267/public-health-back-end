@@ -136,11 +136,18 @@ public class ReportCard {
     private String auditorId;
 
     /**
-     * 状态: PENDING(待审核), APPROVED(已审核), REJECTED(审核不通过)
+     * 分配状态: UNASSIGNED(未分配), ASSIGNED(已分配), IN_PROGRESS(处理中), COMPLETED(已完成), VOID(已作废)
      */
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
-    private ReportStatus status = ReportStatus.PENDING;
+    @Column(name = "assign_status", nullable = false, length = 20)
+    private AssignStatus assignStatus = AssignStatus.UNASSIGNED;
+
+    /**
+     * 审核状态: PENDING(待审核), APPROVED(已审核), REJECTED(审核不通过)
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "audit_status", nullable = false, length = 20)
+    private ReportStatus auditStatus = ReportStatus.PENDING;
 
     /**
      * 审核备注
@@ -202,8 +209,11 @@ public class ReportCard {
         if (this.deleted == null) {
             this.deleted = false;
         }
-        if (this.status == null) {
-            this.status = ReportStatus.PENDING;
+        if (this.auditStatus == null) {
+            this.auditStatus = ReportStatus.PENDING;
+        }
+        if (this.assignStatus == null) {
+            this.assignStatus = AssignStatus.UNASSIGNED;
         }
     }
 
@@ -222,6 +232,27 @@ public class ReportCard {
         private final String description;
 
         ReportStatus(String description) {
+            this.description = description;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+    }
+
+    /**
+     * 分配状态枚举
+     */
+    public enum AssignStatus {
+        UNASSIGNED("未分配"),    // 未分配给审核组
+        ASSIGNED("已分配"),       // 已分配但未开始处理
+        IN_PROGRESS("处理中"),    // 正在处理
+        COMPLETED("已完成"),      // 审核完成
+        VOID("已作废");           // 作废
+
+        private final String description;
+
+        AssignStatus(String description) {
             this.description = description;
         }
 

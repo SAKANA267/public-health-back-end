@@ -2,6 +2,7 @@ package com.publichealth.public_health_api.module.reportcard.service.impl;
 
 import com.publichealth.public_health_api.common.PageResult;
 import com.publichealth.public_health_api.exception.BusinessException;
+import com.publichealth.public_health_api.module.auditgroup.repository.AuditGroupMemberRepository;
 import com.publichealth.public_health_api.module.reportcard.dto.*;
 import com.publichealth.public_health_api.module.reportcard.entity.ReportCard;
 import com.publichealth.public_health_api.module.reportcard.repository.ReportCardRepository;
@@ -35,6 +36,7 @@ public class ReportCardServiceImpl implements ReportCardService {
 
     private final ReportCardRepository repository;
     private final SysUserService sysUserService;
+    private final AuditGroupMemberRepository auditGroupMemberRepository;
 
     // ============================================
     // 基础 CRUD 操作
@@ -63,7 +65,7 @@ public class ReportCardServiceImpl implements ReportCardService {
         entity.setPhone(request.getPhone());
         entity.setReportDoctor(request.getReportDoctor());
         entity.setFillDate(request.getFillDate());
-        entity.setStatus(ReportCard.ReportStatus.PENDING);
+        entity.setAuditStatus(ReportCard.ReportStatus.PENDING);
         entity.setDeleted(false);
 
         // 3. 保存
@@ -102,7 +104,7 @@ public class ReportCardServiceImpl implements ReportCardService {
                 .orElseThrow(() -> new BusinessException("报告卡不存在"));
 
         // 业务校验: 仅允许更新待审核状态的报告卡
-        if (entity.getStatus() != ReportCard.ReportStatus.PENDING) {
+        if (entity.getAuditStatus() != ReportCard.ReportStatus.PENDING) {
             throw new BusinessException("仅允许更新待审核状态的报告卡");
         }
 
@@ -203,7 +205,7 @@ public class ReportCardServiceImpl implements ReportCardService {
 
     @Override
     public List<ReportCardDTO> getReportCardsByStatus(ReportCard.ReportStatus status) {
-        List<ReportCard> entities = repository.findByStatusAndDeletedFalse(status);
+        List<ReportCard> entities = repository.findByAuditStatusAndDeletedFalse(status);
         return entities.stream()
                 .map(ReportCardDTO::fromEntity)
                 .collect(Collectors.toList());
@@ -225,6 +227,64 @@ public class ReportCardServiceImpl implements ReportCardService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public PageResult<ReportCardDTO> getUnassignedReportCards(ReportCardQueryRequest request) {
+        log.info("查询未分配报告卡列表: page={}, size={}, keyword={}, hospitalArea={}, department={}",
+                request.getPage(), request.getSize(), request.getKeyword(),
+                request.getHospitalArea(), request.getDepartment());
+
+        // 构建分页参数
+        Pageable pageable = PageRequest.of(
+                request.getPage() - 1,
+                request.getSize(),
+                Sort.by(Sort.Direction.DESC, "createTime")
+        );
+
+        // 查询未分配的报告卡
+        Page<ReportCard> page = repository.findByAssignStatusAndDeletedFalse(
+                ReportCard.AssignStatus.UNASSIGNED,
+                pageable
+        );
+
+        // 根据条件过滤 (前端传来的额外条件)
+        List<ReportCardDTO> dtoList = page.getContent().stream()
+                .filter(card -> {
+                    boolean match = true;
+                    if (StringUtils.hasText(request.getKeyword())) {
+                        String keyword = request.getKeyword().toLowerCase();
+                        match = match && (
+                            card.getName().toLowerCase().contains(keyword) ||
+                            card.getDiagnosisName().toLowerCase().contains(keyword) ||
+                            card.getInpatientNo().toLowerCase().contains(keyword)
+                        );
+                    }
+                    if (StringUtils.hasText(request.getHospitalArea())) {
+                        match = match && card.getHospitalArea().equals(request.getHospitalArea());
+                    }
+                    if (StringUtils.hasText(request.getDepartment())) {
+                        match = match && card.getDepartment().equals(request.getDepartment());
+                    }
+                    return match;
+                })
+                .map(ReportCardDTO::fromEntity)
+                .collect(Collectors.toList());
+
+        return PageResult.of(
+                request.getPage(),
+                request.getSize(),
+                page.getTotalElements(),
+                dtoList
+        );
+    }
+
+    @Override
+    public List<ReportCardDTO> getReportCardsByAssignStatus(ReportCard.AssignStatus assignStatus) {
+        List<ReportCard> entities = repository.findByAssignStatusAndDeletedFalse(assignStatus);
+        return entities.stream()
+                .map(ReportCardDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
     // ============================================
     // 审核业务操作
     // ============================================
@@ -238,7 +298,7 @@ public class ReportCardServiceImpl implements ReportCardService {
                 .orElseThrow(() -> new BusinessException("报告卡不存在"));
 
         // 业务校验: 仅允许审核待审核状态的报告卡
-        if (entity.getStatus() != ReportCard.ReportStatus.PENDING) {
+        if (entity.getAuditStatus() != ReportCard.ReportStatus.PENDING) {
             throw new BusinessException("仅允许审核待审核状态的报告卡");
         }
 
@@ -246,7 +306,7 @@ public class ReportCardServiceImpl implements ReportCardService {
         SysUserDTO auditor = sysUserService.getUserById(auditorId);
 
         // 更新审核信息
-        entity.setStatus(ReportCard.ReportStatus.APPROVED);
+        entity.setAuditStatus(ReportCard.ReportStatus.APPROVED);
         entity.setAuditDate(LocalDate.now());
         entity.setAuditor(auditor.getName());
         entity.setAuditorId(auditor.getId());
@@ -265,7 +325,7 @@ public class ReportCardServiceImpl implements ReportCardService {
                 .orElseThrow(() -> new BusinessException("报告卡不存在"));
 
         // 业务校验: 仅允许审核待审核状态的报告卡
-        if (entity.getStatus() != ReportCard.ReportStatus.PENDING) {
+        if (entity.getAuditStatus() != ReportCard.ReportStatus.PENDING) {
             throw new BusinessException("仅允许审核待审核状态的报告卡");
         }
 
@@ -273,7 +333,7 @@ public class ReportCardServiceImpl implements ReportCardService {
         SysUserDTO auditor = sysUserService.getUserById(auditorId);
 
         // 更新审核信息
-        entity.setStatus(ReportCard.ReportStatus.REJECTED);
+        entity.setAuditStatus(ReportCard.ReportStatus.REJECTED);
         entity.setAuditDate(LocalDate.now());
         entity.setAuditor(auditor.getName());
         entity.setAuditorId(auditor.getId());
@@ -292,12 +352,12 @@ public class ReportCardServiceImpl implements ReportCardService {
                 .orElseThrow(() -> new BusinessException("报告卡不存在"));
 
         // 业务校验: 仅允许撤回已审核或审核不通过状态的报告卡
-        if (entity.getStatus() == ReportCard.ReportStatus.PENDING) {
+        if (entity.getAuditStatus() == ReportCard.ReportStatus.PENDING) {
             throw new BusinessException("该报告卡为待审核状态，无需撤回");
         }
 
         // 重置为待审核状态
-        entity.setStatus(ReportCard.ReportStatus.PENDING);
+        entity.setAuditStatus(ReportCard.ReportStatus.PENDING);
         entity.setAuditDate(null);
         entity.setAuditor(null);
         entity.setAuditorId(null);
@@ -349,7 +409,79 @@ public class ReportCardServiceImpl implements ReportCardService {
 
     @Override
     public long getCountByStatus(ReportCard.ReportStatus status) {
-        return repository.countByStatusAndDeletedFalse(status);
+        return repository.countByAuditStatusAndDeletedFalse(status);
+    }
+
+    // ============================================
+    // 权限过滤查询
+    // ============================================
+
+    @Override
+    public PageResult<ReportCardDTO> getMyAccessibleReportCards(ReportCardQueryRequest request, String userId) {
+        log.info("查询我的权限组可访问报告卡列表: userId={}, page={}, size={}", userId, request.getPage(), request.getSize());
+
+        // 获取用户所属的审核组ID列表
+        List<String> groupIds = auditGroupMemberRepository.findGroupIdsByUserId(userId);
+
+        if (groupIds.isEmpty()) {
+            // 用户不属于任何审核组，返回空结果
+            log.info("用户不属于任何审核组: userId={}", userId);
+            return PageResult.of(request.getPage(), request.getSize(), 0L, List.of());
+        }
+
+        log.info("用户所属审核组: userId={}, groupIds={}", userId, groupIds);
+
+        // 构建分页参数
+        Pageable pageable = PageRequest.of(
+                request.getPage() - 1,
+                request.getSize(),
+                Sort.by(Sort.Direction.DESC, "createTime")
+        );
+
+        // 查询分配给用户所在审核组的报告卡
+        Page<ReportCard> page = repository.findByAuditGroupIdsAndConditions(
+                groupIds,
+                request.getKeyword(),
+                request.getStatus(),
+                request.getHospitalArea(),
+                request.getDepartment(),
+                request.getAuditorId(),
+                request.getStartTime(),
+                request.getEndTime(),
+                pageable
+        );
+
+        // 转换为DTO
+        List<ReportCardDTO> dtoList = page.getContent().stream()
+                .map(ReportCardDTO::fromEntity)
+                .collect(Collectors.toList());
+
+        return PageResult.of(
+                request.getPage(),
+                request.getSize(),
+                page.getTotalElements(),
+                dtoList
+        );
+    }
+
+    @Override
+    public List<ReportCardDTO> searchMyAccessibleReportCards(String keyword, String userId) {
+        log.info("搜索我的权限组可访问报告卡: userId={}, keyword={}", userId, keyword);
+
+        // 获取用户所属的审核组ID列表
+        List<String> groupIds = auditGroupMemberRepository.findGroupIdsByUserId(userId);
+
+        if (groupIds.isEmpty()) {
+            // 用户不属于任何审核组，返回空结果
+            log.info("用户不属于任何审核组: userId={}", userId);
+            return List.of();
+        }
+
+        // 搜索分配给用户所在审核组的报告卡
+        List<ReportCard> entities = repository.searchByAuditGroupIds(groupIds, keyword);
+        return entities.stream()
+                .map(ReportCardDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 
     // ============================================

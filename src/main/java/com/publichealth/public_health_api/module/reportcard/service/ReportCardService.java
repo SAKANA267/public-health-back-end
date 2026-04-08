@@ -98,6 +98,36 @@ public interface ReportCardService {
      */
     List<ReportCardDTO> getReportCardsByDepartment(String department);
 
+    /**
+     * 获取未分配报告卡列表 (用于任务分配)
+     * @param request 查询请求
+     * @return 分页结果
+     */
+    PageResult<ReportCardDTO> getUnassignedReportCards(ReportCardQueryRequest request);
+
+    /**
+     * 根据分配状态查询报告卡列表
+     * @param assignStatus 分配状态
+     * @return DTO列表
+     */
+    List<ReportCardDTO> getReportCardsByAssignStatus(ReportCard.AssignStatus assignStatus);
+
+    /**
+     * 分页查询我的权限组可访问的报告卡列表
+     * @param request 查询请求
+     * @param userId 当前用户ID
+     * @return 分页结果
+     */
+    PageResult<ReportCardDTO> getMyAccessibleReportCards(ReportCardQueryRequest request, String userId);
+
+    /**
+     * 搜索我的权限组可访问的报告卡
+     * @param keyword 搜索关键词
+     * @param userId 当前用户ID
+     * @return DTO列表
+     */
+    List<ReportCardDTO> searchMyAccessibleReportCards(String keyword, String userId);
+
     // ============================================
     // 审核业务操作
     // ============================================

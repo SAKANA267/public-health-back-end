@@ -51,7 +51,8 @@ public class ReportCardDTO {
     private LocalDate auditDate;
     private String auditor;
     private String auditorId;
-    private ReportCard.ReportStatus status;
+    private ReportCard.AssignStatus assignStatus;
+    private ReportCard.ReportStatus auditStatus;
     private String remark;
 
     // ============================================
@@ -84,7 +85,8 @@ public class ReportCardDTO {
         dto.setAuditDate(entity.getAuditDate());
         dto.setAuditor(entity.getAuditor());
         dto.setAuditorId(entity.getAuditorId());
-        dto.setStatus(entity.getStatus());
+        dto.setAssignStatus(entity.getAssignStatus());
+        dto.setAuditStatus(entity.getAuditStatus());
         dto.setRemark(entity.getRemark());
         dto.setCreateTime(entity.getCreateTime());
         dto.setUpdateTime(entity.getUpdateTime());

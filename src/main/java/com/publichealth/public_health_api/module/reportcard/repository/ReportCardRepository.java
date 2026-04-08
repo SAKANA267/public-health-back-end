@@ -44,24 +44,48 @@ public interface ReportCardRepository extends JpaRepository<ReportCard, String> 
     // ============================================
 
     /**
-     * 根据状态查询未删除的列表
+     * 根据审核状态查询未删除的列表
      */
-    List<ReportCard> findByStatusAndDeletedFalse(ReportCard.ReportStatus status);
+    List<ReportCard> findByAuditStatusAndDeletedFalse(ReportCard.ReportStatus auditStatus);
 
     /**
-     * 根据状态查询未删除的列表 (分页)
+     * 根据审核状态查询未删除的列表 (分页)
      */
-    Page<ReportCard> findByStatusAndDeletedFalse(ReportCard.ReportStatus status, Pageable pageable);
+    Page<ReportCard> findByAuditStatusAndDeletedFalse(ReportCard.ReportStatus auditStatus, Pageable pageable);
 
     /**
      * 查询所有待审核的报告卡
      */
-    List<ReportCard> findByStatusAndDeletedFalseOrderByFillDateDesc(ReportCard.ReportStatus status);
+    List<ReportCard> findByAuditStatusAndDeletedFalseOrderByFillDateDesc(ReportCard.ReportStatus auditStatus);
 
     /**
      * 查询所有待审核的报告卡 (分页)
      */
-    Page<ReportCard> findByStatusAndDeletedFalseOrderByFillDateDesc(ReportCard.ReportStatus status, Pageable pageable);
+    Page<ReportCard> findByAuditStatusAndDeletedFalseOrderByFillDateDesc(ReportCard.ReportStatus auditStatus, Pageable pageable);
+
+    // ============================================
+    // 分配状态查询
+    // ============================================
+
+    /**
+     * 根据分配状态查询未删除的列表
+     */
+    List<ReportCard> findByAssignStatusAndDeletedFalse(ReportCard.AssignStatus assignStatus);
+
+    /**
+     * 根据分配状态查询未删除的列表 (分页)
+     */
+    Page<ReportCard> findByAssignStatusAndDeletedFalse(ReportCard.AssignStatus assignStatus, Pageable pageable);
+
+    /**
+     * 查询所有未分配的报告卡
+     */
+    List<ReportCard> findByAssignStatusAndDeletedFalseOrderByFillDateDesc(ReportCard.AssignStatus assignStatus);
+
+    /**
+     * 查询所有未分配的报告卡 (分页)
+     */
+    Page<ReportCard> findByAssignStatusAndDeletedFalseOrderByFillDateDesc(ReportCard.AssignStatus assignStatus, Pageable pageable);
 
     // ============================================
     // 院区/科室查询
@@ -163,7 +187,7 @@ public interface ReportCardRepository extends JpaRepository<ReportCard, String> 
            "(:keyword IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(r.diagnosisName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(r.inpatientNo) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
-           "(:status IS NULL OR r.status = :status) AND " +
+           "(:status IS NULL OR r.auditStatus = :status) AND " +
            "(:hospitalArea IS NULL OR r.hospitalArea = :hospitalArea) AND " +
            "(:department IS NULL OR r.department = :department) AND " +
            "(:auditorId IS NULL OR r.auditorId = :auditorId) AND " +
@@ -179,6 +203,69 @@ public interface ReportCardRepository extends JpaRepository<ReportCard, String> 
             @Param("endTime") LocalDateTime endTime,
             @Param("includeDeleted") Boolean includeDeleted,
             Pageable pageable
+    );
+
+    /**
+     * 根据审核组ID列表查询报告卡 (权限过滤)
+     * 查询分配给指定审核组的报告卡
+     */
+    @Query("SELECT DISTINCT r FROM ReportCard r " +
+           "INNER JOIN ReportCardAssignment a ON r.id = a.reportCardId " +
+           "WHERE a.auditGroupId IN :groupIds " +
+           "AND r.deleted = false " +
+           "AND a.deleted = false " +
+           "AND a.status IN ('PENDING', 'IN_PROGRESS')")
+    Page<ReportCard> findByAuditGroupIds(
+            @Param("groupIds") List<String> groupIds,
+            Pageable pageable
+    );
+
+    /**
+     * 根据审核组ID列表和条件查询报告卡 (权限过滤)
+     * 支持多条件组合查询
+     */
+    @Query("SELECT DISTINCT r FROM ReportCard r " +
+           "INNER JOIN ReportCardAssignment a ON r.id = a.reportCardId " +
+           "WHERE a.auditGroupId IN :groupIds " +
+           "AND r.deleted = false " +
+           "AND a.deleted = false " +
+           "AND a.status IN ('PENDING', 'IN_PROGRESS') " +
+           "AND (:keyword IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(r.diagnosisName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(r.inpatientNo) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "AND (:status IS NULL OR r.auditStatus = :status) " +
+           "AND (:hospitalArea IS NULL OR r.hospitalArea = :hospitalArea) " +
+           "AND (:department IS NULL OR r.department = :department) " +
+           "AND (:auditorId IS NULL OR r.auditorId = :auditorId) " +
+           "AND (:startTime IS NULL OR r.createTime >= :startTime) " +
+           "AND (:endTime IS NULL OR r.createTime <= :endTime)")
+    Page<ReportCard> findByAuditGroupIdsAndConditions(
+            @Param("groupIds") List<String> groupIds,
+            @Param("keyword") String keyword,
+            @Param("status") ReportCard.ReportStatus status,
+            @Param("hospitalArea") String hospitalArea,
+            @Param("department") String department,
+            @Param("auditorId") String auditorId,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime,
+            Pageable pageable
+    );
+
+    /**
+     * 根据审核组ID列表搜索报告卡 (权限过滤)
+     */
+    @Query("SELECT DISTINCT r FROM ReportCard r " +
+           "INNER JOIN ReportCardAssignment a ON r.id = a.reportCardId " +
+           "WHERE a.auditGroupId IN :groupIds " +
+           "AND r.deleted = false " +
+           "AND a.deleted = false " +
+           "AND a.status IN ('PENDING', 'IN_PROGRESS') " +
+           "AND (LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(r.diagnosisName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(r.inpatientNo) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    List<ReportCard> searchByAuditGroupIds(
+            @Param("groupIds") List<String> groupIds,
+            @Param("keyword") String keyword
     );
 
     /**
@@ -203,7 +290,7 @@ public interface ReportCardRepository extends JpaRepository<ReportCard, String> 
      * 复合查询: 状态 + 填报日期范围
      */
     @Query("SELECT r FROM ReportCard r WHERE r.deleted = false AND " +
-           "r.status = :status AND r.fillDate BETWEEN :start AND :end")
+           "r.auditStatus = :status AND r.fillDate BETWEEN :start AND :end")
     Page<ReportCard> findByStatusAndDateRange(
             @Param("status") ReportCard.ReportStatus status,
             @Param("start") LocalDate start,
@@ -214,7 +301,7 @@ public interface ReportCardRepository extends JpaRepository<ReportCard, String> 
      * 复合查询: 院区 + 科室 + 状态
      */
     @Query("SELECT r FROM ReportCard r WHERE r.deleted = false AND " +
-           "r.hospitalArea = :hospitalArea AND r.department = :department AND r.status = :status")
+           "r.hospitalArea = :hospitalArea AND r.department = :department AND r.auditStatus = :status")
     Page<ReportCard> findByHospitalAreaAndDepartmentAndStatus(
             @Param("hospitalArea") String hospitalArea,
             @Param("department") String department,
@@ -225,7 +312,7 @@ public interface ReportCardRepository extends JpaRepository<ReportCard, String> 
      * 复合查询: 院区 + 状态
      */
     @Query("SELECT r FROM ReportCard r WHERE r.deleted = false AND " +
-           "r.hospitalArea = :hospitalArea AND r.status = :status")
+           "r.hospitalArea = :hospitalArea AND r.auditStatus = :status")
     Page<ReportCard> findByHospitalAreaAndStatus(
             @Param("hospitalArea") String hospitalArea,
             @Param("status") ReportCard.ReportStatus status,
@@ -235,7 +322,7 @@ public interface ReportCardRepository extends JpaRepository<ReportCard, String> 
      * 复合查询: 科室 + 状态
      */
     @Query("SELECT r FROM ReportCard r WHERE r.deleted = false AND " +
-           "r.department = :department AND r.status = :status")
+           "r.department = :department AND r.auditStatus = :status")
     Page<ReportCard> findByDepartmentAndStatus(
             @Param("department") String department,
             @Param("status") ReportCard.ReportStatus status,
@@ -244,13 +331,18 @@ public interface ReportCardRepository extends JpaRepository<ReportCard, String> 
     /**
      * 统计各状态的数量
      */
-    @Query("SELECT r.status, COUNT(r) FROM ReportCard r WHERE r.deleted = false GROUP BY r.status")
+    @Query("SELECT r.auditStatus, COUNT(r) FROM ReportCard r WHERE r.deleted = false GROUP BY r.auditStatus")
     List<Object[]> countByStatus();
 
     /**
      * 统计指定状态的数量
      */
-    long countByStatusAndDeletedFalse(ReportCard.ReportStatus status);
+    long countByAuditStatusAndDeletedFalse(ReportCard.ReportStatus auditStatus);
+
+    /**
+     * 统计指定分配状态的数量
+     */
+    long countByAssignStatusAndDeletedFalse(ReportCard.AssignStatus assignStatus);
 
     // ============================================
     // 修改/删除操作 (需要 @Modifying 注解)
@@ -266,7 +358,7 @@ public interface ReportCardRepository extends JpaRepository<ReportCard, String> 
     /**
      * 批量更新状态
      */
-    @Query("UPDATE ReportCard r SET r.status = :status WHERE r.id IN :ids")
+    @Query("UPDATE ReportCard r SET r.auditStatus = :status WHERE r.id IN :ids")
     @org.springframework.data.jpa.repository.Modifying
     int batchUpdateStatus(@Param("ids") List<String> ids, @Param("status") ReportCard.ReportStatus status);
 

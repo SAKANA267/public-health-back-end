@@ -113,9 +113,24 @@ public class ReportCardController {
      * GET /api/report-cards?page=1&size=10&status=PENDING&hospitalArea=xxx
      */
     @GetMapping
-    public ApiResponse<PageResult<ReportCardDTO>> getReportCardList(ReportCardQueryRequest request) {
+    public ApiResponse<PageResult<ReportCardDTO>> getReportCardList(
+            ReportCardQueryRequest request,
+            @RequestAttribute(required = false) String userId) {
         log.info("查询报告卡列表: {}", request);
         PageResult<ReportCardDTO> result = reportCardService.getReportCardList(request);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 分页查询我的权限组可访问的报告卡列表
+     * GET /api/report-cards/my?page=1&size=10&keyword=xxx&status=xxx
+     */
+    @GetMapping("/my")
+    public ApiResponse<PageResult<ReportCardDTO>> getMyAccessibleReportCards(
+            ReportCardQueryRequest request,
+            @RequestAttribute String userId) {
+        log.info("查询我的权限组可访问报告卡列表: userId={}, request={}", userId, request);
+        PageResult<ReportCardDTO> result = reportCardService.getMyAccessibleReportCards(request, userId);
         return ApiResponse.success(result);
     }
 
@@ -124,9 +139,24 @@ public class ReportCardController {
      * GET /api/report-cards/search?keyword=xxx
      */
     @GetMapping("/search")
-    public ApiResponse<List<ReportCardDTO>> searchReportCards(@RequestParam String keyword) {
+    public ApiResponse<List<ReportCardDTO>> searchReportCards(
+            @RequestParam String keyword,
+            @RequestAttribute(required = false) String userId) {
         log.info("搜索报告卡: keyword={}", keyword);
         List<ReportCardDTO> list = reportCardService.searchReportCards(keyword);
+        return ApiResponse.success(list);
+    }
+
+    /**
+     * 搜索我的权限组可访问的报告卡
+     * GET /api/report-cards/my/search?keyword=xxx
+     */
+    @GetMapping("/my/search")
+    public ApiResponse<List<ReportCardDTO>> searchMyAccessibleReportCards(
+            @RequestParam String keyword,
+            @RequestAttribute String userId) {
+        log.info("搜索我的权限组可访问报告卡: userId={}, keyword={}", userId, keyword);
+        List<ReportCardDTO> list = reportCardService.searchMyAccessibleReportCards(keyword, userId);
         return ApiResponse.success(list);
     }
 
@@ -160,6 +190,28 @@ public class ReportCardController {
     public ApiResponse<List<ReportCardDTO>> getReportCardsByDepartment(@PathVariable String department) {
         log.info("获取科室报告卡列表: department={}", department);
         List<ReportCardDTO> list = reportCardService.getReportCardsByDepartment(department);
+        return ApiResponse.success(list);
+    }
+
+    /**
+     * 获取未分配的报告卡列表 (用于任务分配)
+     * GET /api/report-cards/unassigned?page=1&size=10&keyword=xxx&hospitalArea=xxx&department=xxx
+     */
+    @GetMapping("/unassigned")
+    public ApiResponse<PageResult<ReportCardDTO>> getUnassignedReportCards(ReportCardQueryRequest request) {
+        log.info("查询未分配报告卡列表: {}", request);
+        PageResult<ReportCardDTO> result = reportCardService.getUnassignedReportCards(request);
+        return ApiResponse.success(result);
+    }
+
+    /**
+     * 根据分配状态获取报告卡列表
+     * GET /api/report-cards/assign-status/{assignStatus}
+     */
+    @GetMapping("/assign-status/{assignStatus}")
+    public ApiResponse<List<ReportCardDTO>> getReportCardsByAssignStatus(@PathVariable ReportCard.AssignStatus assignStatus) {
+        log.info("获取分配状态报告卡列表: assignStatus={}", assignStatus);
+        List<ReportCardDTO> list = reportCardService.getReportCardsByAssignStatus(assignStatus);
         return ApiResponse.success(list);
     }
 

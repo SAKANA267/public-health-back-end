@@ -24,6 +24,12 @@ public interface ReportCardAssignmentRepository extends JpaRepository<ReportCard
             String reportCardId, AssignmentStatus status);
 
     /**
+     * 根据报卡ID查询所有未完成的分配记录（可能有多条）
+     */
+    List<ReportCardAssignment> findAllByReportCardIdAndDeletedFalseAndStatusNot(
+            String reportCardId, AssignmentStatus status);
+
+    /**
      * 根据审核组ID查询待处理任务
      */
     List<ReportCardAssignment> findByAuditGroupIdAndDeletedFalseAndStatusOrderByAssignTimeDesc(
