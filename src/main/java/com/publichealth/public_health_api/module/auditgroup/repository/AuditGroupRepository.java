@@ -116,4 +116,10 @@ public interface AuditGroupRepository extends JpaRepository<AuditGroup, String> 
     @Query("SELECT CASE WHEN COUNT(ag) > 0 THEN true ELSE false END FROM AuditGroup ag " +
            "WHERE ag.groupCode = :groupCode AND ag.id != :id AND ag.deleted = false")
     boolean existsByGroupCodeAndIdNot(@Param("groupCode") String groupCode, @Param("id") String id);
+
+    /**
+     * 根据ID查询未删除的审核组
+     */
+    @Query("SELECT ag FROM AuditGroup ag WHERE ag.id = :id AND ag.deleted = false")
+    Optional<AuditGroup> findByIdAndDeletedFalse(@Param("id") String id);
 }

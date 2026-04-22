@@ -39,9 +39,12 @@ public class AssignmentRuleServiceImpl implements AssignmentRuleService {
             throw new BusinessException("规则编码已存在");
         }
 
-        // 验证目标审核组存在
-        if (request.getTargetGroupId() != null) {
-            auditGroupRepository.findById(request.getTargetGroupId())
+        // 验证目标审核组存在（仅手动指定策略需要）
+        if (request.getAssignStrategy() == AssignmentRule.AssignStrategy.MANUAL) {
+            if (request.getTargetGroupId() == null || request.getTargetGroupId().trim().isEmpty()) {
+                throw new BusinessException("手动指定策略必须选择目标审核组");
+            }
+            auditGroupRepository.findByIdAndDeletedFalse(request.getTargetGroupId())
                     .orElseThrow(() -> new BusinessException("目标审核组不存在"));
         }
 
@@ -76,9 +79,12 @@ public class AssignmentRuleServiceImpl implements AssignmentRuleService {
                     }
                 });
 
-        // 验证目标审核组存在
-        if (request.getTargetGroupId() != null) {
-            auditGroupRepository.findById(request.getTargetGroupId())
+        // 验证目标审核组存在（仅手动指定策略需要）
+        if (request.getAssignStrategy() == AssignmentRule.AssignStrategy.MANUAL) {
+            if (request.getTargetGroupId() == null || request.getTargetGroupId().trim().isEmpty()) {
+                throw new BusinessException("手动指定策略必须选择目标审核组");
+            }
+            auditGroupRepository.findByIdAndDeletedFalse(request.getTargetGroupId())
                     .orElseThrow(() -> new BusinessException("目标审核组不存在"));
         }
 
@@ -176,7 +182,7 @@ public class AssignmentRuleServiceImpl implements AssignmentRuleService {
 
         // 加载审核组名称
         if (rule.getTargetGroupId() != null) {
-            auditGroupRepository.findById(rule.getTargetGroupId())
+            auditGroupRepository.findByIdAndDeletedFalse(rule.getTargetGroupId())
                     .ifPresent(group -> response.setTargetGroupName(group.getGroupName()));
         }
 

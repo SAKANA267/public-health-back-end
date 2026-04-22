@@ -37,3 +37,4 @@ build/
 docs/
 /CLAUDE.md
 /node_modules/
+/src/main/resources/db/migration/V2__add_assign_status_to_report_card.sql
