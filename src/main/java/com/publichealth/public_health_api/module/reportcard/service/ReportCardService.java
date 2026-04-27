@@ -2,6 +2,7 @@ package com.publichealth.public_health_api.module.reportcard.service;
 
 import com.publichealth.public_health_api.common.PageResult;
 import com.publichealth.public_health_api.module.reportcard.dto.*;
+import com.publichealth.public_health_api.module.reportcard.dto.statistics.*;
 import com.publichealth.public_health_api.module.reportcard.entity.ReportCard;
 
 import java.util.List;
@@ -174,7 +175,13 @@ public interface ReportCardService {
     // ============================================
 
     /**
-     * 获取各状态统计数量
+     * 获取各状态统计数量（扩展版，包含总数和今日新增）
+     * @return ReportCardStatisticsDTO
+     */
+    ReportCardStatisticsDTO getStatistics();
+
+    /**
+     * 获取各状态统计数量（旧版，保持兼容）
      * @return Map<状态描述, 数量>
      */
     Map<String, Long> getStatusStatistics();
@@ -185,6 +192,32 @@ public interface ReportCardService {
      * @return 数量
      */
     long getCountByStatus(ReportCard.ReportStatus status);
+
+    /**
+     * 获取疾病种类分布统计
+     * @return 疾病分布列表
+     */
+    List<DistributionItemDTO> getDiseaseDistribution();
+
+    /**
+     * 获取院区分布统计
+     * @return 院区分布列表
+     */
+    List<DistributionItemDTO> getAreaDistribution();
+
+    /**
+     * 获取时间趋势数据
+     * @param period 周期: week(周), month(月), year(年)
+     * @return 趋势数据列表
+     */
+    List<TrendDataDTO> getTrendData(String period);
+
+    /**
+     * 获取最近审核活动
+     * @param limit 返回条数限制
+     * @return 最近活动列表
+     */
+    List<RecentActivityDTO> getRecentActivities(Integer limit);
 
     // ============================================
     // 存在性检查

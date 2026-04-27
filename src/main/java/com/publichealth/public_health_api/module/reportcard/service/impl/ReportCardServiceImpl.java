@@ -4,6 +4,7 @@ import com.publichealth.public_health_api.common.PageResult;
 import com.publichealth.public_health_api.exception.BusinessException;
 import com.publichealth.public_health_api.module.auditgroup.repository.AuditGroupMemberRepository;
 import com.publichealth.public_health_api.module.reportcard.dto.*;
+import com.publichealth.public_health_api.module.reportcard.dto.statistics.*;
 import com.publichealth.public_health_api.module.reportcard.entity.ReportCard;
 import com.publichealth.public_health_api.module.reportcard.repository.ReportCardRepository;
 import com.publichealth.public_health_api.module.reportcard.service.ReportCardService;
@@ -20,9 +21,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -390,6 +391,26 @@ public class ReportCardServiceImpl implements ReportCardService {
     // ============================================
 
     @Override
+    public ReportCardStatisticsDTO getStatistics() {
+        log.info("获取报卡统计数据");
+
+        ReportCardStatisticsDTO dto = new ReportCardStatisticsDTO();
+
+        // 获取总数
+        dto.setTotal(repository.countByDeletedFalse());
+
+        // 获取各状态数量
+        dto.setPending(repository.countByAuditStatusAndDeletedFalse(ReportCard.ReportStatus.PENDING));
+        dto.setApproved(repository.countByAuditStatusAndDeletedFalse(ReportCard.ReportStatus.APPROVED));
+        dto.setRejected(repository.countByAuditStatusAndDeletedFalse(ReportCard.ReportStatus.REJECTED));
+
+        // 获取今日新增
+        dto.setTodayNew(repository.countTodayNew());
+
+        return dto;
+    }
+
+    @Override
     public Map<String, Long> getStatusStatistics() {
         List<Object[]> results = repository.countByStatus();
 
@@ -410,6 +431,118 @@ public class ReportCardServiceImpl implements ReportCardService {
     @Override
     public long getCountByStatus(ReportCard.ReportStatus status) {
         return repository.countByAuditStatusAndDeletedFalse(status);
+    }
+
+    @Override
+    public List<DistributionItemDTO> getDiseaseDistribution() {
+        log.info("获取疾病种类分布统计");
+
+        List<Object[]> results = repository.countByDiagnosisGroup();
+
+        return results.stream()
+                .map(result -> new DistributionItemDTO(
+                        (String) result[0],
+                        (Long) result[1]
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<DistributionItemDTO> getAreaDistribution() {
+        log.info("获取院区分布统计");
+
+        List<Object[]> results = repository.countByHospitalAreaGroup();
+
+        return results.stream()
+                .map(result -> new DistributionItemDTO(
+                        (String) result[0],
+                        (Long) result[1]
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TrendDataDTO> getTrendData(String period) {
+        log.info("获取时间趋势数据: period={}", period);
+
+        List<Object[]> results;
+        Map<String, String> labelMapping = new HashMap<>();
+
+        switch (period.toLowerCase()) {
+            case "week":
+                // 最近7天数据
+                LocalDateTime weekStart = LocalDateTime.now().minusDays(7);
+                results = repository.countByLast7Days(weekStart);
+                // 英文星期名转中文
+                labelMapping.put("Monday", "周一");
+                labelMapping.put("Tuesday", "周二");
+                labelMapping.put("Wednesday", "周三");
+                labelMapping.put("Thursday", "周四");
+                labelMapping.put("Friday", "周五");
+                labelMapping.put("Saturday", "周六");
+                labelMapping.put("Sunday", "周日");
+                break;
+            case "month":
+                // 当月每周数据
+                results = repository.countByWeeksInMonth();
+                break;
+            case "year":
+                // 当年每月数据
+                results = repository.countByMonthsInYear();
+                break;
+            default:
+                throw new BusinessException("无效的周期参数: " + period);
+        }
+
+        List<TrendDataDTO> trendList = results.stream()
+                .map(result -> {
+                    String label = (String) result[0];
+                    // 转换星期标签
+                    if (labelMapping.containsKey(label)) {
+                        label = labelMapping.get(label);
+                    }
+                    return new TrendDataDTO(label, (Long) result[1]);
+                })
+                .collect(Collectors.toList());
+
+        return trendList;
+    }
+
+    @Override
+    public List<RecentActivityDTO> getRecentActivities(Integer limit) {
+        log.info("获取最近审核活动: limit={}", limit);
+
+        Pageable pageable = PageRequest.of(0, limit != null ? limit : 10, Sort.by(Sort.Direction.DESC, "updateTime"));
+        List<ReportCard> recentCards = repository.findRecentUpdatedRecords(pageable);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+        return recentCards.stream()
+                .map(card -> {
+                    RecentActivityDTO dto = new RecentActivityDTO();
+                    dto.setUser(card.getAuditor() != null ? card.getAuditor() : card.getReportDoctor());
+                    dto.setTarget(card.getDiagnosisName() + "-" + card.getName());
+                    dto.setTime(card.getUpdateTime().format(formatter));
+
+                    // 根据审核状态设置操作和状态
+                    switch (card.getAuditStatus()) {
+                        case APPROVED:
+                            dto.setAction("审核通过");
+                            dto.setStatus("success");
+                            break;
+                        case REJECTED:
+                            dto.setAction("审核驳回");
+                            dto.setStatus("danger");
+                            break;
+                        default:
+                            dto.setAction("提交报卡");
+                            dto.setStatus("pending");
+                            break;
+                    }
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     // ============================================

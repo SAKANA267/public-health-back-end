@@ -23,6 +23,11 @@ public class CdcUploadStatistics {
     private Long notUploaded;
 
     /**
+     * 上报中数量
+     */
+    private Long uploading;
+
+    /**
      * 已上报成功数量
      */
     private Long uploaded;

@@ -150,4 +150,15 @@ public class ReportCardAssignmentController {
         PageResult<AssignmentOperationLogResponse> response = assignmentService.getOperationLogs(assignmentId, page, size);
         return ApiResponse.success(response);
     }
+
+    /**
+     * 获取任务分配统计
+     * GET /api/assignments/statistics
+     */
+    @GetMapping("/statistics")
+    public ApiResponse<AssignmentStatisticsDTO> getStatistics() {
+        log.info("获取任务分配统计");
+        AssignmentStatisticsDTO statistics = assignmentService.getStatistics();
+        return ApiResponse.success(statistics);
+    }
 }

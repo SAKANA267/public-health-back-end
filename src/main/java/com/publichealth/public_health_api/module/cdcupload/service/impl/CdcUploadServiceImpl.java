@@ -159,6 +159,7 @@ public class CdcUploadServiceImpl implements CdcUploadService {
         CdcUploadStatistics result = new CdcUploadStatistics();
         result.setTotal((long) request.getReportCardIds().size());
         result.setNotUploaded(0L);
+        result.setUploading(0L);
         result.setUploaded(successCount);
         result.setUploadFailed(failCount);
         return result;
@@ -200,12 +201,14 @@ public class CdcUploadServiceImpl implements CdcUploadService {
 
         long total = cdcUploadRepository.countByDeletedFalse();
         long notUploaded = cdcUploadRepository.countByUploadStatusAndDeletedFalse(UploadStatus.NOT_UPLOADED);
+        long uploading = cdcUploadRepository.countByUploadStatusAndDeletedFalse(UploadStatus.UPLOADING);
         long uploaded = cdcUploadRepository.countByUploadStatusAndDeletedFalse(UploadStatus.UPLOADED);
         long uploadFailed = cdcUploadRepository.countByUploadStatusAndDeletedFalse(UploadStatus.UPLOAD_FAILED);
 
         CdcUploadStatistics stats = new CdcUploadStatistics();
         stats.setTotal(total);
         stats.setNotUploaded(notUploaded);
+        stats.setUploading(uploading);
         stats.setUploaded(uploaded);
         stats.setUploadFailed(uploadFailed);
         return stats;

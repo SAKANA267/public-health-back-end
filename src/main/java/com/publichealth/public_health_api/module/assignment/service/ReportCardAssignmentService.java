@@ -70,4 +70,10 @@ public interface ReportCardAssignmentService {
      * 查询操作日志
      */
     PageResult<AssignmentOperationLogResponse> getOperationLogs(String assignmentId, Integer page, Integer size);
+
+    /**
+     * 获取任务分配统计
+     * @return 统计数据
+     */
+    AssignmentStatisticsDTO getStatistics();
 }

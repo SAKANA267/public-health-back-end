@@ -344,6 +344,57 @@ public interface ReportCardRepository extends JpaRepository<ReportCard, String> 
      */
     long countByAssignStatusAndDeletedFalse(ReportCard.AssignStatus assignStatus);
 
+    /**
+     * 统计今日新增数量
+     */
+    @Query("SELECT COUNT(r) FROM ReportCard r WHERE r.deleted = false AND DATE(r.createTime) = CURRENT_DATE")
+    long countTodayNew();
+
+    /**
+     * 统计未删除的记录总数
+     */
+    long countByDeletedFalse();
+
+    // ============================================
+    // 统计相关查询 (Dashboard页面)
+    // ============================================
+
+    /**
+     * 按疾病种类统计数量
+     */
+    @Query("SELECT r.diagnosisName, COUNT(r) FROM ReportCard r WHERE r.deleted = false GROUP BY r.diagnosisName ORDER BY COUNT(r) DESC")
+    List<Object[]> countByDiagnosisGroup();
+
+    /**
+     * 按院区统计数量
+     */
+    @Query("SELECT r.hospitalArea, COUNT(r) FROM ReportCard r WHERE r.deleted = false GROUP BY r.hospitalArea ORDER BY COUNT(r) DESC")
+    List<Object[]> countByHospitalAreaGroup();
+
+    /**
+     * 按最近7天统计数量（周趋势）- Native Query
+     */
+    @Query(value = "SELECT DAYNAME(r.create_time), COUNT(r.id) FROM report_card r WHERE r.deleted = false AND r.create_time >= :startDate GROUP BY DAYNAME(r.create_time) ORDER BY r.create_time", nativeQuery = true)
+    List<Object[]> countByLast7Days(@Param("startDate") LocalDateTime startDate);
+
+    /**
+     * 按当月每周统计数量（月趋势）- Native Query
+     */
+    @Query(value = "SELECT CONCAT('第', WEEK(r.create_time) - WEEK(DATE_FORMAT(r.create_time, '%Y-%m-01')) + 1, '周'), COUNT(r.id) FROM report_card r WHERE r.deleted = false AND YEAR(r.create_time) = YEAR(CURRENT_DATE) AND MONTH(r.create_time) = MONTH(CURRENT_DATE) GROUP BY WEEK(r.create_time) ORDER BY WEEK(r.create_time)", nativeQuery = true)
+    List<Object[]> countByWeeksInMonth();
+
+    /**
+     * 按当年每月统计数量（年趋势）- Native Query
+     */
+    @Query(value = "SELECT CONCAT(MONTH(r.create_time), '月'), COUNT(r.id) FROM report_card r WHERE r.deleted = false AND YEAR(r.create_time) = YEAR(CURRENT_DATE) GROUP BY MONTH(r.create_time) ORDER BY MONTH(r.create_time)", nativeQuery = true)
+    List<Object[]> countByMonthsInYear();
+
+    /**
+     * 查询最近的报卡更新记录（用于最近活动）
+     */
+    @Query("SELECT r FROM ReportCard r WHERE r.deleted = false ORDER BY r.updateTime DESC")
+    List<ReportCard> findRecentUpdatedRecords(Pageable pageable);
+
     // ============================================
     // 修改/删除操作 (需要 @Modifying 注解)
     // ============================================

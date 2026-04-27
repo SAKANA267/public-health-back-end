@@ -5,6 +5,7 @@ import com.publichealth.public_health_api.common.ApiResponse;
 import com.publichealth.public_health_api.common.PageResult;
 import com.publichealth.public_health_api.module.operationlog.enums.OperationType;
 import com.publichealth.public_health_api.module.reportcard.dto.*;
+import com.publichealth.public_health_api.module.reportcard.dto.statistics.*;
 import com.publichealth.public_health_api.module.reportcard.entity.ReportCard;
 import com.publichealth.public_health_api.module.reportcard.service.ReportCardService;
 import jakarta.validation.Valid;
@@ -285,14 +286,70 @@ public class ReportCardController {
     // ============================================
 
     /**
-     * 获取各状态统计数量
+     * 获取报卡统计数据（扩展版，包含总数和今日新增）
      * GET /api/report-cards/statistics
      */
     @GetMapping("/statistics")
+    public ApiResponse<ReportCardStatisticsDTO> getStatistics() {
+        log.info("获取报告卡统计数据");
+        ReportCardStatisticsDTO statistics = reportCardService.getStatistics();
+        return ApiResponse.success(statistics);
+    }
+
+    /**
+     * 获取各状态统计数量（旧版，保持兼容）
+     * GET /api/report-cards/statistics/by-status
+     */
+    @GetMapping("/statistics/by-status")
     public ApiResponse<Map<String, Long>> getStatusStatistics() {
         log.info("获取报告卡状态统计");
         Map<String, Long> statistics = reportCardService.getStatusStatistics();
         return ApiResponse.success(statistics);
+    }
+
+    /**
+     * 获取疾病种类分布统计
+     * GET /api/report-cards/statistics/disease-distribution
+     */
+    @GetMapping("/statistics/disease-distribution")
+    public ApiResponse<List<DistributionItemDTO>> getDiseaseDistribution() {
+        log.info("获取疾病种类分布统计");
+        List<DistributionItemDTO> distribution = reportCardService.getDiseaseDistribution();
+        return ApiResponse.success(distribution);
+    }
+
+    /**
+     * 获取院区分布统计
+     * GET /api/report-cards/statistics/area-distribution
+     */
+    @GetMapping("/statistics/area-distribution")
+    public ApiResponse<List<DistributionItemDTO>> getAreaDistribution() {
+        log.info("获取院区分布统计");
+        List<DistributionItemDTO> distribution = reportCardService.getAreaDistribution();
+        return ApiResponse.success(distribution);
+    }
+
+    /**
+     * 获取时间趋势数据
+     * GET /api/report-cards/statistics/trend?period=week|month|year
+     */
+    @GetMapping("/statistics/trend")
+    public ApiResponse<List<TrendDataDTO>> getTrendData(@RequestParam(defaultValue = "week") String period) {
+        log.info("获取时间趋势数据: period={}", period);
+        List<TrendDataDTO> trend = reportCardService.getTrendData(period);
+        return ApiResponse.success(trend);
+    }
+
+    /**
+     * 获取最近审核活动
+     * GET /api/report-cards/statistics/recent-activities?limit=10
+     */
+    @GetMapping("/statistics/recent-activities")
+    public ApiResponse<List<RecentActivityDTO>> getRecentActivities(
+            @RequestParam(defaultValue = "10") Integer limit) {
+        log.info("获取最近审核活动: limit={}", limit);
+        List<RecentActivityDTO> activities = reportCardService.getRecentActivities(limit);
+        return ApiResponse.success(activities);
     }
 
     /**

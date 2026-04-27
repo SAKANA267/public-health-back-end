@@ -373,6 +373,28 @@ public class ReportCardAssignmentServiceImpl implements ReportCardAssignmentServ
         return PageResult.of(page, size, (long) logs.size(), responses);
     }
 
+    @Override
+    public AssignmentStatisticsDTO getStatistics() {
+        log.info("获取任务分配统计数据");
+
+        AssignmentStatisticsDTO dto = new AssignmentStatisticsDTO();
+
+        // 获取总数
+        dto.setTotal(assignmentRepository.countByDeletedFalse());
+
+        // 获取各状态数量
+        dto.setPending(assignmentRepository.countByStatusAndDeletedFalse(
+                ReportCardAssignment.AssignmentStatus.PENDING));
+        dto.setInProgress(assignmentRepository.countByStatusAndDeletedFalse(
+                ReportCardAssignment.AssignmentStatus.IN_PROGRESS));
+        dto.setCompleted(assignmentRepository.countByStatusAndDeletedFalse(
+                ReportCardAssignment.AssignmentStatus.COMPLETED));
+        dto.setCancelled(assignmentRepository.countByStatusAndDeletedFalse(
+                ReportCardAssignment.AssignmentStatus.CANCELLED));
+
+        return dto;
+    }
+
     // ============================================
     // 私有方法
     // ============================================

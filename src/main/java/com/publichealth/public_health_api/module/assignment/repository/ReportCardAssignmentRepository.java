@@ -65,4 +65,24 @@ public interface ReportCardAssignmentRepository extends JpaRepository<ReportCard
      */
     List<ReportCardAssignment> findByDeletedFalseAndAssignTimeBetweenOrderByAssignTimeDesc(
             LocalDateTime startTime, LocalDateTime endTime);
+
+    // ============================================
+    // 统计查询
+    // ============================================
+
+    /**
+     * 统计各状态的数量
+     */
+    @Query("SELECT a.status, COUNT(a) FROM ReportCardAssignment a WHERE a.deleted = false GROUP BY a.status")
+    List<Object[]> countByStatusGroup();
+
+    /**
+     * 统计指定状态的数量
+     */
+    Long countByStatusAndDeletedFalse(AssignmentStatus status);
+
+    /**
+     * 统计未删除的记录总数
+     */
+    Long countByDeletedFalse();
 }

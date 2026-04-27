@@ -185,6 +185,29 @@ public interface OperationLogRepository extends JpaRepository<OperationLog, Stri
                                            @Param("endTime") LocalDateTime endTime);
 
     // ============================================
+    // 用户统计相关查询（Profile页面）
+    // ============================================
+
+    /**
+     * 统计用户总操作数量
+     */
+    long countByUserId(String userId);
+
+    /**
+     * 查询用户最近的操作记录
+     */
+    @Query("SELECT l FROM OperationLog l WHERE l.userId = :userId ORDER BY l.createTime DESC")
+    List<OperationLog> findRecentByUserId(@Param("userId") String userId, Pageable pageable);
+
+    /**
+     * 统计用户每日操作数量（用于贡献日历）
+     */
+    @Query("SELECT DATE(l.createTime), COUNT(l) FROM OperationLog l WHERE " +
+           "l.userId = :userId AND l.createTime >= :startDate GROUP BY DATE(l.createTime)")
+    List<Object[]> countByUserAndDateGroup(@Param("userId") String userId,
+                                           @Param("startDate") LocalDateTime startDate);
+
+    // ============================================
     // 删除操作
     // ============================================
 
