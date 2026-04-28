@@ -4,6 +4,7 @@ import com.publichealth.public_health_api.security.CustomAccessDeniedHandler;
 import com.publichealth.public_health_api.security.JwtAuthenticationEntryPoint;
 import com.publichealth.public_health_api.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -26,6 +27,13 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
+    /**
+     * JWT开关配置，可通过 application.properties 中的 jwt.enabled 控制
+     * 默认为 true（启用JWT）
+     */
+    @Value("${jwt.enabled:true}")
+    private boolean jwtEnabled;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -35,8 +43,16 @@ public class SecurityConfig {
             // 配置会话管理为无状态
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
+            );
 
+        // 如果JWT被禁用，允许所有请求通过（用于压力测试）
+        if (!jwtEnabled) {
+            http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+            return http.build();
+        }
+
+        // JWT启用时，配置完整的权限控制
+        http
             // 配置异常处理
             .exceptionHandling(exception -> exception
                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)

@@ -19,6 +19,7 @@ import java.util.Map;
 /**
  * 传染病报告卡控制器
  * 处理报告卡相关的HTTP请求
+ * 迁移说明：支持4张表的关联操作
  */
 @Slf4j
 @RestController
@@ -28,26 +29,15 @@ public class ReportCardController {
 
     private final ReportCardService reportCardService;
 
-    // ============================================
-    // 基础 CRUD 操作
-    // ============================================
-
-    /**
-     * 创建报告卡
-     * POST /api/report-cards
-     */
     @PostMapping
     @OperationLog(module = "报告卡管理", operationType = OperationType.CREATE, description = "创建报告卡")
     public ApiResponse<ReportCardDTO> createReportCard(@Valid @RequestBody CreateReportCardRequest request) {
-        log.info("收到创建报告卡请求: inpatientNo={}, name={}", request.getInpatientNo(), request.getName());
+        log.info("收到创建报告卡请求: inpatientNo={}, name={}",
+                request.getInpatientNo(), request.getPatientInfo().getPatientName());
         ReportCardDTO dto = reportCardService.createReportCard(request);
         return ApiResponse.success("报告卡创建成功", dto);
     }
 
-    /**
-     * 根据ID获取报告卡
-     * GET /api/report-cards/{id}
-     */
     @GetMapping("/{id}")
     public ApiResponse<ReportCardDTO> getReportCardById(@PathVariable String id) {
         log.info("获取报告卡: id={}", id);
@@ -55,10 +45,6 @@ public class ReportCardController {
         return ApiResponse.success(dto);
     }
 
-    /**
-     * 根据住院号获取报告卡
-     * GET /api/report-cards/inpatient/{inpatientNo}
-     */
     @GetMapping("/inpatient/{inpatientNo}")
     public ApiResponse<ReportCardDTO> getReportCardByInpatientNo(@PathVariable String inpatientNo) {
         log.info("根据住院号获取报告卡: inpatientNo={}", inpatientNo);
@@ -66,11 +52,6 @@ public class ReportCardController {
         return ApiResponse.success(dto);
     }
 
-    /**
-     * 更新报告卡
-     * 注意: 仅允许更新待审核状态的报告卡
-     * PUT /api/report-cards/{id}
-     */
     @PutMapping("/{id}")
     @OperationLog(module = "报告卡管理", operationType = OperationType.UPDATE, description = "更新报告卡")
     public ApiResponse<ReportCardDTO> updateReportCard(
@@ -81,10 +62,6 @@ public class ReportCardController {
         return ApiResponse.success("报告卡更新成功", dto);
     }
 
-    /**
-     * 删除报告卡
-     * DELETE /api/report-cards/{id}
-     */
     @DeleteMapping("/{id}")
     @OperationLog(module = "报告卡管理", operationType = OperationType.DELETE, description = "删除报告卡")
     public ApiResponse<Void> deleteReportCard(@PathVariable String id) {
@@ -93,10 +70,6 @@ public class ReportCardController {
         return ApiResponse.success("报告卡已删除");
     }
 
-    /**
-     * 批量删除报告卡
-     * DELETE /api/report-cards/batch
-     */
     @DeleteMapping("/batch")
     @OperationLog(module = "报告卡管理", operationType = OperationType.DELETE, description = "批量删除报告卡")
     public ApiResponse<Void> batchDeleteReportCards(@RequestBody List<String> ids) {
@@ -105,14 +78,6 @@ public class ReportCardController {
         return ApiResponse.success("批量删除成功");
     }
 
-    // ============================================
-    // 查询操作
-    // ============================================
-
-    /**
-     * 分页查询报告卡列表
-     * GET /api/report-cards?page=1&size=10&status=PENDING&hospitalArea=xxx
-     */
     @GetMapping
     public ApiResponse<PageResult<ReportCardDTO>> getReportCardList(
             ReportCardQueryRequest request,
@@ -122,10 +87,6 @@ public class ReportCardController {
         return ApiResponse.success(result);
     }
 
-    /**
-     * 分页查询我的权限组可访问的报告卡列表
-     * GET /api/report-cards/my?page=1&size=10&keyword=xxx&status=xxx
-     */
     @GetMapping("/my")
     public ApiResponse<PageResult<ReportCardDTO>> getMyAccessibleReportCards(
             ReportCardQueryRequest request,
@@ -135,10 +96,6 @@ public class ReportCardController {
         return ApiResponse.success(result);
     }
 
-    /**
-     * 搜索报告卡
-     * GET /api/report-cards/search?keyword=xxx
-     */
     @GetMapping("/search")
     public ApiResponse<List<ReportCardDTO>> searchReportCards(
             @RequestParam String keyword,
@@ -148,10 +105,6 @@ public class ReportCardController {
         return ApiResponse.success(list);
     }
 
-    /**
-     * 搜索我的权限组可访问的报告卡
-     * GET /api/report-cards/my/search?keyword=xxx
-     */
     @GetMapping("/my/search")
     public ApiResponse<List<ReportCardDTO>> searchMyAccessibleReportCards(
             @RequestParam String keyword,
@@ -161,21 +114,13 @@ public class ReportCardController {
         return ApiResponse.success(list);
     }
 
-    /**
-     * 根据状态获取报告卡列表
-     * GET /api/report-cards/status/{status}
-     */
     @GetMapping("/status/{status}")
-    public ApiResponse<List<ReportCardDTO>> getReportCardsByStatus(@PathVariable ReportCard.ReportStatus status) {
+    public ApiResponse<List<ReportCardDTO>> getReportCardsByStatus(@PathVariable ReportCard.AuditStatus status) {
         log.info("获取状态报告卡列表: status={}", status);
         List<ReportCardDTO> list = reportCardService.getReportCardsByStatus(status);
         return ApiResponse.success(list);
     }
 
-    /**
-     * 根据院区获取报告卡列表
-     * GET /api/report-cards/hospital-area/{hospitalArea}
-     */
     @GetMapping("/hospital-area/{hospitalArea}")
     public ApiResponse<List<ReportCardDTO>> getReportCardsByHospitalArea(@PathVariable String hospitalArea) {
         log.info("获取院区报告卡列表: hospitalArea={}", hospitalArea);
@@ -183,10 +128,6 @@ public class ReportCardController {
         return ApiResponse.success(list);
     }
 
-    /**
-     * 根据科室获取报告卡列表
-     * GET /api/report-cards/department/{department}
-     */
     @GetMapping("/department/{department}")
     public ApiResponse<List<ReportCardDTO>> getReportCardsByDepartment(@PathVariable String department) {
         log.info("获取科室报告卡列表: department={}", department);
@@ -194,10 +135,6 @@ public class ReportCardController {
         return ApiResponse.success(list);
     }
 
-    /**
-     * 获取未分配的报告卡列表 (用于任务分配)
-     * GET /api/report-cards/unassigned?page=1&size=10&keyword=xxx&hospitalArea=xxx&department=xxx
-     */
     @GetMapping("/unassigned")
     public ApiResponse<PageResult<ReportCardDTO>> getUnassignedReportCards(ReportCardQueryRequest request) {
         log.info("查询未分配报告卡列表: {}", request);
@@ -205,25 +142,14 @@ public class ReportCardController {
         return ApiResponse.success(result);
     }
 
-    /**
-     * 根据分配状态获取报告卡列表
-     * GET /api/report-cards/assign-status/{assignStatus}
-     */
     @GetMapping("/assign-status/{assignStatus}")
-    public ApiResponse<List<ReportCardDTO>> getReportCardsByAssignStatus(@PathVariable ReportCard.AssignStatus assignStatus) {
+    public ApiResponse<List<ReportCardDTO>> getReportCardsByAssignStatus(
+            @PathVariable com.publichealth.public_health_api.module.reportcard.entity.ReportCardAudit.AssignStatus assignStatus) {
         log.info("获取分配状态报告卡列表: assignStatus={}", assignStatus);
         List<ReportCardDTO> list = reportCardService.getReportCardsByAssignStatus(assignStatus);
         return ApiResponse.success(list);
     }
 
-    // ============================================
-    // 审核操作
-    // ============================================
-
-    /**
-     * 审核通过
-     * PUT /api/report-cards/{id}/approve
-     */
     @PutMapping("/{id}/approve")
     @OperationLog(module = "报告卡管理", operationType = OperationType.AUDIT, description = "审核通过")
     public ApiResponse<Void> approveReportCard(
@@ -234,10 +160,6 @@ public class ReportCardController {
         return ApiResponse.success("审核通过");
     }
 
-    /**
-     * 审核拒绝
-     * PUT /api/report-cards/{id}/reject
-     */
     @PutMapping("/{id}/reject")
     @OperationLog(module = "报告卡管理", operationType = OperationType.AUDIT, description = "审核拒绝")
     public ApiResponse<Void> rejectReportCard(
@@ -248,10 +170,6 @@ public class ReportCardController {
         return ApiResponse.success("审核拒绝");
     }
 
-    /**
-     * 撤回审核
-     * PUT /api/report-cards/{id}/withdraw
-     */
     @PutMapping("/{id}/withdraw")
     public ApiResponse<Void> withdrawAudit(@PathVariable String id) {
         log.info("撤回审核: id={}", id);
@@ -259,10 +177,6 @@ public class ReportCardController {
         return ApiResponse.success("审核已撤回");
     }
 
-    /**
-     * 获取待审核报告卡列表
-     * GET /api/report-cards/pending?page=1&size=10
-     */
     @GetMapping("/pending")
     public ApiResponse<PageResult<ReportCardDTO>> getPendingCards(ReportCardQueryRequest request) {
         log.info("查询待审核报告卡列表: page={}, size={}", request.getPage(), request.getSize());
@@ -270,10 +184,6 @@ public class ReportCardController {
         return ApiResponse.success(result);
     }
 
-    /**
-     * 获取我审核的报告卡列表
-     * GET /api/report-cards/my-audited?auditorId=xxx
-     */
     @GetMapping("/my-audited")
     public ApiResponse<List<ReportCardDTO>> getMyAuditedCards(@RequestParam String auditorId) {
         log.info("获取我审核的报告卡列表: auditorId={}", auditorId);
@@ -281,14 +191,6 @@ public class ReportCardController {
         return ApiResponse.success(list);
     }
 
-    // ============================================
-    // 统计查询
-    // ============================================
-
-    /**
-     * 获取报卡统计数据（扩展版，包含总数和今日新增）
-     * GET /api/report-cards/statistics
-     */
     @GetMapping("/statistics")
     public ApiResponse<ReportCardStatisticsDTO> getStatistics() {
         log.info("获取报告卡统计数据");
@@ -296,10 +198,6 @@ public class ReportCardController {
         return ApiResponse.success(statistics);
     }
 
-    /**
-     * 获取各状态统计数量（旧版，保持兼容）
-     * GET /api/report-cards/statistics/by-status
-     */
     @GetMapping("/statistics/by-status")
     public ApiResponse<Map<String, Long>> getStatusStatistics() {
         log.info("获取报告卡状态统计");
@@ -307,10 +205,6 @@ public class ReportCardController {
         return ApiResponse.success(statistics);
     }
 
-    /**
-     * 获取疾病种类分布统计
-     * GET /api/report-cards/statistics/disease-distribution
-     */
     @GetMapping("/statistics/disease-distribution")
     public ApiResponse<List<DistributionItemDTO>> getDiseaseDistribution() {
         log.info("获取疾病种类分布统计");
@@ -318,10 +212,6 @@ public class ReportCardController {
         return ApiResponse.success(distribution);
     }
 
-    /**
-     * 获取院区分布统计
-     * GET /api/report-cards/statistics/area-distribution
-     */
     @GetMapping("/statistics/area-distribution")
     public ApiResponse<List<DistributionItemDTO>> getAreaDistribution() {
         log.info("获取院区分布统计");
@@ -329,10 +219,6 @@ public class ReportCardController {
         return ApiResponse.success(distribution);
     }
 
-    /**
-     * 获取时间趋势数据
-     * GET /api/report-cards/statistics/trend?period=week|month|year
-     */
     @GetMapping("/statistics/trend")
     public ApiResponse<List<TrendDataDTO>> getTrendData(@RequestParam(defaultValue = "week") String period) {
         log.info("获取时间趋势数据: period={}", period);
@@ -340,10 +226,6 @@ public class ReportCardController {
         return ApiResponse.success(trend);
     }
 
-    /**
-     * 获取最近审核活动
-     * GET /api/report-cards/statistics/recent-activities?limit=10
-     */
     @GetMapping("/statistics/recent-activities")
     public ApiResponse<List<RecentActivityDTO>> getRecentActivities(
             @RequestParam(defaultValue = "10") Integer limit) {
@@ -352,35 +234,19 @@ public class ReportCardController {
         return ApiResponse.success(activities);
     }
 
-    /**
-     * 获取指定状态的数量
-     * GET /api/report-cards/count?status=xxx
-     */
     @GetMapping("/count")
-    public ApiResponse<Long> getCountByStatus(@RequestParam ReportCard.ReportStatus status) {
+    public ApiResponse<Long> getCountByStatus(@RequestParam ReportCard.AuditStatus status) {
         log.info("获取状态数量统计: status={}", status);
         Long count = reportCardService.getCountByStatus(status);
         return ApiResponse.success(count);
     }
 
-    // ============================================
-    // 存在性检查
-    // ============================================
-
-    /**
-     * 检查住院号是否存在
-     * GET /api/report-cards/check/inpatient-no?inpatientNo=xxx
-     */
     @GetMapping("/check/inpatient-no")
     public ApiResponse<Boolean> checkInpatientNoExists(@RequestParam String inpatientNo) {
         boolean exists = reportCardService.existsByInpatientNo(inpatientNo);
         return ApiResponse.success(exists);
     }
 
-    /**
-     * 检查门诊号是否存在
-     * GET /api/report-cards/check/outpatient-no?outpatientNo=xxx
-     */
     @GetMapping("/check/outpatient-no")
     public ApiResponse<Boolean> checkOutpatientNoExists(@RequestParam String outpatientNo) {
         boolean exists = reportCardService.existsByOutpatientNo(outpatientNo);

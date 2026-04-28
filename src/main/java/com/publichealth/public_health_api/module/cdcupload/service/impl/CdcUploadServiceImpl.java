@@ -8,6 +8,10 @@ import com.publichealth.public_health_api.module.cdcupload.enums.UploadStatus;
 import com.publichealth.public_health_api.module.cdcupload.repository.CdcUploadRepository;
 import com.publichealth.public_health_api.module.cdcupload.service.CdcUploadService;
 import com.publichealth.public_health_api.module.reportcard.entity.ReportCard;
+import com.publichealth.public_health_api.module.reportcard.entity.ReportCardAudit;
+import com.publichealth.public_health_api.module.reportcard.entity.ReportCardPatient;
+import com.publichealth.public_health_api.module.reportcard.repository.ReportCardAuditRepository;
+import com.publichealth.public_health_api.module.reportcard.repository.ReportCardPatientRepository;
 import com.publichealth.public_health_api.module.reportcard.repository.ReportCardRepository;
 import com.publichealth.public_health_api.module.sysuser.entity.SysUser;
 import com.publichealth.public_health_api.module.sysuser.repository.SysUserRepository;
@@ -36,6 +40,8 @@ public class CdcUploadServiceImpl implements CdcUploadService {
 
     private final CdcUploadRepository cdcUploadRepository;
     private final ReportCardRepository reportCardRepository;
+    private final ReportCardPatientRepository patientRepository;
+    private final ReportCardAuditRepository auditRepository;
     private final SysUserRepository sysUserRepository;
 
     @Override
@@ -68,7 +74,9 @@ public class CdcUploadServiceImpl implements CdcUploadService {
         List<CdcUploadDTO> records = page.getContent().stream()
                 .map(upload -> {
                     ReportCard rc = reportCardMap.get(upload.getReportCardId());
-                    return CdcUploadDTO.fromEntity(upload, rc);
+                    ReportCardPatient patient = patientRepository.findByReportCardId(upload.getReportCardId()).orElse(null);
+                    ReportCardAudit audit = auditRepository.findByReportCardId(upload.getReportCardId()).orElse(null);
+                    return CdcUploadDTO.fromEntity(upload, rc, patient, audit);
                 })
                 .toList();
 
@@ -85,7 +93,7 @@ public class CdcUploadServiceImpl implements CdcUploadService {
                 .orElseThrow(() -> new BusinessException("报告卡不存在"));
 
         // 2. 验证审核状态
-        if (reportCard.getAuditStatus() != ReportCard.ReportStatus.APPROVED) {
+        if (reportCard.getAuditStatus() != ReportCard.AuditStatus.APPROVED) {
             throw new BusinessException("报告卡未审核通过，无法上报");
         }
 

@@ -12,6 +12,8 @@ import com.publichealth.public_health_api.module.assignment.service.WorkStatsSer
 import com.publichealth.public_health_api.module.auditgroup.entity.AuditGroup;
 import com.publichealth.public_health_api.module.auditgroup.repository.AuditGroupRepository;
 import com.publichealth.public_health_api.module.reportcard.entity.ReportCard;
+import com.publichealth.public_health_api.module.reportcard.entity.ReportCardAudit;
+import com.publichealth.public_health_api.module.reportcard.repository.ReportCardAuditRepository;
 import com.publichealth.public_health_api.module.reportcard.repository.ReportCardRepository;
 import com.publichealth.public_health_api.module.sysuser.entity.SysUser;
 import com.publichealth.public_health_api.module.sysuser.repository.SysUserRepository;
@@ -40,6 +42,7 @@ public class ReportCardAssignmentServiceImpl implements ReportCardAssignmentServ
     private final ReportCardAssignmentRepository assignmentRepository;
     private final AuditGroupRepository auditGroupRepository;
     private final ReportCardRepository reportCardRepository;
+    private final ReportCardAuditRepository auditRepository;
     private final SysUserRepository sysUserRepository;
     private final AssignmentOperationLogRepository operationLogRepository;
     private final AssignmentRuleRepository ruleRepository;
@@ -96,8 +99,7 @@ public class ReportCardAssignmentServiceImpl implements ReportCardAssignmentServ
         if (!existingAssignments.isEmpty()) {
             ReportCard card = reportCardRepository.findById(request.getReportCardId()).orElse(null);
             if (card != null) {
-                card.setAssignStatus(ReportCard.AssignStatus.UNASSIGNED);
-                reportCardRepository.save(card);
+                updateAuditAssignStatus(card.getId(), ReportCardAudit.AssignStatus.UNASSIGNED);
             }
         }
 
@@ -115,8 +117,7 @@ public class ReportCardAssignmentServiceImpl implements ReportCardAssignmentServ
         assignmentRepository.save(assignment);
 
         // 更新报卡分配状态为已分配
-        reportCard.setAssignStatus(ReportCard.AssignStatus.ASSIGNED);
-        reportCardRepository.save(reportCard);
+        updateAuditAssignStatus(reportCard.getId(), ReportCardAudit.AssignStatus.ASSIGNED);
 
         // 更新统计
         workStatsService.updateStats(request.getAuditGroupId());
@@ -199,8 +200,7 @@ public class ReportCardAssignmentServiceImpl implements ReportCardAssignmentServ
         // 更新报卡分配状态为处理中
         ReportCard reportCard = reportCardRepository.findById(assignment.getReportCardId())
                 .orElseThrow(() -> new BusinessException("报卡不存在"));
-        reportCard.setAssignStatus(ReportCard.AssignStatus.IN_PROGRESS);
-        reportCardRepository.save(reportCard);
+        updateAuditAssignStatus(reportCard.getId(), ReportCardAudit.AssignStatus.IN_PROGRESS);
 
         // 更新统计
         workStatsService.updateStats(assignment.getAuditGroupId());
@@ -232,10 +232,18 @@ public class ReportCardAssignmentServiceImpl implements ReportCardAssignmentServ
         // 更新报卡状态
         ReportCard reportCard = reportCardRepository.findById(assignment.getReportCardId())
                 .orElseThrow(() -> new BusinessException("报卡不存在"));
-        reportCard.setAssignStatus(ReportCard.AssignStatus.COMPLETED);
-        reportCard.setAuditStatus(ReportCard.ReportStatus.APPROVED);
-        reportCard.setAuditorId(operatorId);
-        reportCard.setAuditDate(LocalDateTime.now().toLocalDate());
+
+        // 更新审核记录
+        ReportCardAudit audit = auditRepository.findByReportCardId(reportCard.getId())
+                .orElseThrow(() -> new BusinessException("审核记录不存在"));
+        audit.setAssignStatus(ReportCardAudit.AssignStatus.COMPLETED);
+        audit.setAuditStatus(ReportCardAudit.AuditStatus.APPROVED);
+        audit.setAuditorId(operatorId);
+        audit.setAuditDate(LocalDateTime.now());
+        auditRepository.save(audit);
+
+        // 同步更新主表冗余字段
+        reportCard.setAuditStatus(ReportCard.AuditStatus.APPROVED);
         reportCardRepository.save(reportCard);
 
         // 更新统计
@@ -265,8 +273,7 @@ public class ReportCardAssignmentServiceImpl implements ReportCardAssignmentServ
         // 更新报卡分配状态为未分配
         ReportCard reportCard = reportCardRepository.findById(assignment.getReportCardId())
                 .orElseThrow(() -> new BusinessException("报卡不存在"));
-        reportCard.setAssignStatus(ReportCard.AssignStatus.UNASSIGNED);
-        reportCardRepository.save(reportCard);
+        updateAuditAssignStatus(reportCard.getId(), ReportCardAudit.AssignStatus.UNASSIGNED);
 
         // 更新统计
         workStatsService.updateStats(assignment.getAuditGroupId());
@@ -405,10 +412,19 @@ public class ReportCardAssignmentServiceImpl implements ReportCardAssignmentServ
     }
 
     private void validateGroupMember(String auditGroupId, String userId) {
-        // 简化验证，实际应该查询审核组成员表
-        // 这里假设只要用户存在就可以操作
         sysUserRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException("用户不存在"));
+    }
+
+    private void updateAuditAssignStatus(String reportCardId, ReportCardAudit.AssignStatus status) {
+        ReportCardAudit audit = auditRepository.findByReportCardId(reportCardId)
+                .orElseGet(() -> {
+                    ReportCardAudit newAudit = new ReportCardAudit();
+                    newAudit.setReportCardId(reportCardId);
+                    return newAudit;
+                });
+        audit.setAssignStatus(status);
+        auditRepository.save(audit);
     }
 
     private void recordOperationLog(ReportCardAssignment assignment,
@@ -464,8 +480,8 @@ public class ReportCardAssignmentServiceImpl implements ReportCardAssignmentServ
         }
         if (reportCard != null) {
             response.setReportCardInpatientNo(reportCard.getInpatientNo());
-            response.setReportCardPatientName(reportCard.getName());
-            response.setReportCardDiagnosisName(reportCard.getDiagnosisName());
+            response.setReportCardPatientName(reportCard.getPatientName());
+            response.setReportCardDiagnosisName(reportCard.getDiseaseName());
         }
 
         if (auditGroup == null) {

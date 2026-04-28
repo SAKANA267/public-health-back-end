@@ -56,8 +56,8 @@ public interface CdcUploadRepository extends JpaRepository<CdcUpload, String> {
            "INNER JOIN ReportCard rc ON cu.reportCardId = rc.id " +
            "WHERE rc.deleted = false AND cu.deleted = false " +
            "AND rc.auditStatus = 'APPROVED' " +
-           "AND (:keyword IS NULL OR LOWER(rc.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-           "OR LOWER(rc.diagnosisName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "AND (:keyword IS NULL OR LOWER(rc.patientName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(rc.diseaseName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
            "AND (:uploadStatus IS NULL OR cu.uploadStatus = :uploadStatus) " +
            "AND (:department IS NULL OR rc.department = :department) " +
            "AND (:fillDateStart IS NULL OR rc.fillDate >= :fillDateStart) " +

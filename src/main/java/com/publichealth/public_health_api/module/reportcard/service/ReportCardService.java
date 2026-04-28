@@ -4,6 +4,7 @@ import com.publichealth.public_health_api.common.PageResult;
 import com.publichealth.public_health_api.module.reportcard.dto.*;
 import com.publichealth.public_health_api.module.reportcard.dto.statistics.*;
 import com.publichealth.public_health_api.module.reportcard.entity.ReportCard;
+import com.publichealth.public_health_api.module.reportcard.entity.ReportCardAudit;
 
 import java.util.List;
 import java.util.Map;
@@ -83,7 +84,7 @@ public interface ReportCardService {
      * @param status 报告状态
      * @return DTO列表
      */
-    List<ReportCardDTO> getReportCardsByStatus(ReportCard.ReportStatus status);
+    List<ReportCardDTO> getReportCardsByStatus(ReportCard.AuditStatus status);
 
     /**
      * 根据院区查询报告卡列表
@@ -111,7 +112,7 @@ public interface ReportCardService {
      * @param assignStatus 分配状态
      * @return DTO列表
      */
-    List<ReportCardDTO> getReportCardsByAssignStatus(ReportCard.AssignStatus assignStatus);
+    List<ReportCardDTO> getReportCardsByAssignStatus(ReportCardAudit.AssignStatus assignStatus);
 
     /**
      * 分页查询我的权限组可访问的报告卡列表
@@ -191,7 +192,7 @@ public interface ReportCardService {
      * @param status 报告状态
      * @return 数量
      */
-    long getCountByStatus(ReportCard.ReportStatus status);
+    long getCountByStatus(ReportCard.AuditStatus status);
 
     /**
      * 获取疾病种类分布统计

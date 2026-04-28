@@ -3,6 +3,8 @@ package com.publichealth.public_health_api.module.cdcupload.dto;
 import com.publichealth.public_health_api.module.cdcupload.entity.CdcUpload;
 import com.publichealth.public_health_api.module.cdcupload.enums.UploadStatus;
 import com.publichealth.public_health_api.module.reportcard.entity.ReportCard;
+import com.publichealth.public_health_api.module.reportcard.entity.ReportCardAudit;
+import com.publichealth.public_health_api.module.reportcard.entity.ReportCardPatient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,56 +14,32 @@ import java.time.LocalDateTime;
 
 /**
  * CDC上报数据传输对象
- * 组合 CdcUpload + ReportCard 字段
+ * 组合 CdcUpload + ReportCard + ReportCardPatient + ReportCardAudit 字段
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class CdcUploadDTO {
 
-    // ============================================
-    // 上报记录信息
-    // ============================================
-
     private String id;
     private String reportCardId;
 
-    // ============================================
-    // 报告卡基础信息
-    // ============================================
-
     private String hospitalArea;
     private String department;
-    private String diagnosisName;
+    private String diseaseName;
     private String inpatientNo;
     private String outpatientNo;
 
-    // ============================================
-    // 患者信息
-    // ============================================
-
-    private String name;
-    private ReportCard.Gender gender;
+    private String patientName;
+    private ReportCardPatient.Gender gender;
     private Integer age;
     private String phone;
 
-    // ============================================
-    // 报告信息
-    // ============================================
-
-    private String reportDoctor;
+    private String doctorName;
     private LocalDate fillDate;
 
-    // ============================================
-    // 审核信息
-    // ============================================
-
-    private String auditor;
-    private LocalDate auditDate;
-
-    // ============================================
-    // 上报状态信息
-    // ============================================
+    private String auditorName;
+    private LocalDateTime auditDate;
 
     private UploadStatus uploadStatus;
     private LocalDateTime uploadTime;
@@ -71,10 +49,8 @@ public class CdcUploadDTO {
     private Integer retryCount;
     private String cdcSerialNo;
 
-    /**
-     * 从 CdcUpload 实体和 ReportCard 实体转换为 DTO
-     */
-    public static CdcUploadDTO fromEntity(CdcUpload upload, ReportCard reportCard) {
+    public static CdcUploadDTO fromEntity(CdcUpload upload, ReportCard reportCard,
+                                           ReportCardPatient patient, ReportCardAudit audit) {
         CdcUploadDTO dto = new CdcUploadDTO();
         dto.setId(upload.getId());
         dto.setReportCardId(upload.getReportCardId());
@@ -89,18 +65,25 @@ public class CdcUploadDTO {
         if (reportCard != null) {
             dto.setHospitalArea(reportCard.getHospitalArea());
             dto.setDepartment(reportCard.getDepartment());
-            dto.setDiagnosisName(reportCard.getDiagnosisName());
+            dto.setDiseaseName(reportCard.getDiseaseName());
             dto.setInpatientNo(reportCard.getInpatientNo());
             dto.setOutpatientNo(reportCard.getOutpatientNo());
-            dto.setName(reportCard.getName());
-            dto.setGender(reportCard.getGender());
-            dto.setAge(reportCard.getAge());
-            dto.setPhone(reportCard.getPhone());
-            dto.setReportDoctor(reportCard.getReportDoctor());
+            dto.setPatientName(reportCard.getPatientName());
+            dto.setDoctorName(reportCard.getDoctorName());
             dto.setFillDate(reportCard.getFillDate());
-            dto.setAuditor(reportCard.getAuditor());
-            dto.setAuditDate(reportCard.getAuditDate());
         }
+
+        if (patient != null) {
+            dto.setGender(patient.getGender());
+            dto.setAge(patient.getAge());
+            dto.setPhone(patient.getPhone());
+        }
+
+        if (audit != null) {
+            dto.setAuditorName(audit.getAuditorName());
+            dto.setAuditDate(audit.getAuditDate());
+        }
+
         return dto;
     }
 }
