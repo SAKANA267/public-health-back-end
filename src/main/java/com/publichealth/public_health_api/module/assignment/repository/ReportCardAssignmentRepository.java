@@ -85,4 +85,36 @@ public interface ReportCardAssignmentRepository extends JpaRepository<ReportCard
      * 统计未删除的记录总数
      */
     Long countByDeletedFalse();
+
+    // ============================================
+    // 审核组工作统计查询
+    // ============================================
+
+    Long countByAuditGroupIdAndDeletedFalse(String auditGroupId);
+
+    Long countByAuditGroupIdAndStatusAndDeletedFalse(String auditGroupId, AssignmentStatus status);
+
+    /**
+     * 获取指定审核组的最后任务时间（使用原生SQL）
+     */
+    @Query(value = "SELECT GREATEST(" +
+           "COALESCE(MAX(assign_time), '1970-01-01 00:00:00'), " +
+           "COALESCE(MAX(accept_time), '1970-01-01 00:00:00'), " +
+           "COALESCE(MAX(complete_time), '1970-01-01 00:00:00')" +
+           ") FROM report_card_assignment " +
+           "WHERE audit_group_id = :groupId AND deleted = 0", nativeQuery = true)
+    String getLastTaskTime(@Param("groupId") String groupId);
+
+    /**
+     * 获取指定审核组的平均处理时长（分钟）（使用原生SQL）
+     */
+    @Query(value = "SELECT AVG(" +
+           "TIMESTAMPDIFF(MINUTE, accept_time, complete_time)" +
+           ") FROM report_card_assignment " +
+           "WHERE audit_group_id = :groupId " +
+           "AND status = 'COMPLETED' " +
+           "AND deleted = 0 " +
+           "AND accept_time IS NOT NULL " +
+           "AND complete_time IS NOT NULL", nativeQuery = true)
+    Double getAvgProcessTime(@Param("groupId") String groupId);
 }
